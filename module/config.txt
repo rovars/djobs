@@ -1,11 +1,11 @@
-# Format: HH:MM SCRIPT_NAME
-#   SCRIPT_NAME = nama file .sh di jobs/ (tanpa .sh)
+# Format: HH:MM shell_command
 #
-# Built-in:
-#   22:30 data off       # matikan data jam 22:30
-#   07:00 data on        # hidupkan data jam 07:00
-#   23:00 airplane on    # mode pesawat jam 23:00
-#   06:00 airplane off   # matikan mode pesawat jam 06:00
+# Examples:
+#   22:30 svc data disable         # matikan data jam 22:30
+#   07:00 svc data enable          # hidupkan data jam 07:00
+#   23:00 cmd connectivity airplane-mode enable
+#   06:00 cmd connectivity airplane-mode disable
+#   12:00 echo "lunch time" > /sdcard/log.txt
 #
-# Custom (buat dulu via WebUI > Custom Jobs):
-#   12:00 my-logger      # jalankan /data/adb/dailyjobs/custom/my-logger.sh
+# Command dijalankan setiap kali waktu cocok (tiap hari).
+# Awali dengan # untuk nonaktifkan sementara.

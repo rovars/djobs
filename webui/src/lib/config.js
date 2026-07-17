@@ -1,5 +1,6 @@
 /* ==========================================================
    config — parse, serialise, and persist config.txt
+   Each line: HH:MM <shell command>
    ========================================================== */
 import { esc, utf8ToBase64, run } from './utils.js';
 
@@ -14,8 +15,8 @@ export function parseConfig(text) {
     if (!t) continue;
     const off = t[0] === '#';
     const cl = off ? t.replace(/^#\s*/, '') : t;
-    const m = cl.match(/^(\d{2}:\d{2})\s+(\S+)\s*(.*)$/);
-    if (m) out.push({ line: i, time: m[1], action: m[2], sub: m[3], disabled: off });
+    const m = cl.match(/^(\d{2}:\d{2})\s+(.+)$/);
+    if (m) out.push({ line: i, time: m[1], cmd: m[2], disabled: off });
   }
   return out;
 }
@@ -23,7 +24,7 @@ export function parseConfig(text) {
 /** Serialise entries back to config.txt format */
 export function serializeConfig(entries) {
   return entries.map((e) => {
-    const body = e.time + ' ' + e.action + (e.sub ? ' ' + e.sub : '');
+    const body = e.time + ' ' + e.cmd;
     return e.disabled ? '# ' + body : body;
   }).join('\n') + '\n';
 }

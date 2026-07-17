@@ -1,7 +1,7 @@
 /* ==========================================================
    actions — CRUD handlers for schedule entries
    ========================================================== */
-import { $, toastMsg, esc, run } from './utils.js';
+import { $, toastMsg } from './utils.js';
 import { writeConfigFile } from './config.js';
 import { getEntries } from './state.js';
 import { load } from './ui.js';
@@ -25,17 +25,21 @@ export function openEdit(idx) {
   const e = getEntries()[idx];
   if (!e) return;
   $('edit-time').value = e.time;
+  $('edit-cmd').value = e.cmd;
   $('edit-disabled').selected = !e.disabled;
   $('edit-dialog').show();
 }
 
 export async function saveEditFromDialog() {
   const newTime = $('edit-time').value;
+  const newCmd  = $('edit-cmd').value.trim();
   const newDisabled = !$('edit-disabled').selected;
   if (!newTime) return toastMsg('Pick a time');
+  if (!newCmd)  return toastMsg('Enter a command');
   try {
     const entries = getEntries();
     entries[editIdx].time = newTime;
+    entries[editIdx].cmd = newCmd;
     entries[editIdx].disabled = newDisabled;
     await writeConfigFile(entries);
     toastMsg('Saved');
@@ -49,8 +53,7 @@ let delIdx = -1;
 
 export function openDelete(idx) {
   delIdx = idx;
-  const e = getEntries()[idx];
-  if (!e) return;
+  if (!getEntries()[idx]) return;
   $('delete-dialog').show();
 }
 
@@ -67,19 +70,16 @@ export async function doDelFromDialog() {
 
 /* ---- Add job to schedule ---- */
 export async function add() {
-  const time  = $('new-time').value;
-  const sel   = $('new-action').value;
-  if (!time)  return toastMsg('Pick a time');
-  if (!sel)   return toastMsg('Pick an action');
-  const parts = sel.split(' ');
-  const action = parts[0];
-  const sub    = parts.slice(1).join(' ');
+  const time = $('new-time').value;
+  const cmd  = $('new-cmd').value.trim();
+  if (!time) return toastMsg('Pick a time');
+  if (!cmd)  return toastMsg('Enter a command');
   try {
     const entries = getEntries();
     for (let i = 0; i < entries.length; i++)
-      if (entries[i].time === time && entries[i].action === action && entries[i].sub === sub)
+      if (entries[i].time === time && entries[i].cmd === cmd)
         return toastMsg('Already exists');
-    entries.push({ time, action, sub, disabled: false });
+    entries.push({ time, cmd, disabled: false });
     await writeConfigFile(entries);
     toastMsg('Job added');
     load();

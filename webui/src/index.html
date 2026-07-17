@@ -11,7 +11,6 @@
 </head>
 <body>
 
-<!-- ── Top App Bar ── -->
 <md-list aria-label="top-app-bar" class="top-app-bar">
   <md-list-item>
     <span slot="headline" class="app-title">DailyJobs</span>
@@ -19,12 +18,7 @@
   </md-list-item>
 </md-list>
 
-<!-- ════════════════════════════════════════════
-     Jobs Tab
-     ════════════════════════════════════════════ -->
 <div class="tab-page" id="page-jobs">
-
-  <!-- Timeline -->
   <section>
     <div class="section-header">
       <h2>Schedule</h2>
@@ -39,13 +33,12 @@
     </div>
   </section>
 
-  <!-- Add Job Form -->
   <section>
     <div class="section-header"><h2>New Job</h2></div>
     <div class="form-card">
       <div class="form-row">
-        <md-outlined-text-field label="Time" type="time" id="new-time" value="22:00" class="grow"></md-outlined-text-field>
-        <md-outlined-select label="Action" id="new-action" class="grow"></md-outlined-select>
+        <md-outlined-text-field label="Time" type="time" id="new-time" value="22:00" class="grow" style="flex:0 0 auto;width:100px"></md-outlined-text-field>
+        <md-outlined-text-field label="Command" id="new-cmd" placeholder="svc data disable" class="grow"></md-outlined-text-field>
       </div>
       <div class="form-actions">
         <md-outlined-button onclick="clearAddForm()">Clear</md-outlined-button>
@@ -53,14 +46,13 @@
       </div>
     </div>
   </section>
-
 </div>
 
-<!-- ── Edit Dialog ── -->
 <md-dialog id="edit-dialog">
   <div slot="headline" id="edit-title">Edit job</div>
   <form slot="content" id="edit-form" method="dialog">
     <md-outlined-text-field label="Time" type="time" id="edit-time" class="full"></md-outlined-text-field>
+    <md-outlined-text-field label="Command" id="edit-cmd" class="full" style="margin-top:12px"></md-outlined-text-field>
     <label class="switch-row">
       <md-switch id="edit-disabled" aria-label="Enabled"></md-switch>
       <span>Enabled</span>
@@ -72,7 +64,6 @@
   </div>
 </md-dialog>
 
-<!-- ── Delete Dialog ── -->
 <md-dialog id="delete-dialog">
   <div slot="headline">Remove job?</div>
   <form slot="content" id="delete-form" method="dialog">
@@ -84,7 +75,6 @@
   </div>
 </md-dialog>
 
-<!-- ── Toast ── -->
 <div class="toast" id="toast"></div>
 
 <script type="module" src="index.js"></script>

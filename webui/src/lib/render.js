@@ -4,10 +4,8 @@
 import { $ } from './utils.js';
 import { badgeColor, label } from './theme.js';
 
-/* ---- Swipe-to-delete state ---- */
 const touchCtx = { el: null, startX: 0, currentX: 0, swiped: false };
 
-/** Initialise swipe gesture on a timeline row */
 function initSwipe(el) {
   let confirmed = false;
   el.addEventListener('touchstart', (e) => {
@@ -41,7 +39,6 @@ function initSwipe(el) {
   }, { passive: true });
 }
 
-/** Rebuild the timeline DOM from a list of entries */
 export function render(list) {
   const el = $('schedule-list');
   $('job-count').textContent = list.length.toString();
@@ -57,7 +54,7 @@ export function render(list) {
   }
 
   el.innerHTML = list.map((s, idx) => {
-    const c = badgeColor(s.action, idx);
+    const c = badgeColor(idx);
     return '<div class="swipe-container">' +
       '<div class="swipe-bg">Delete</div>' +
       '<div class="swipe-content" data-idx="' + idx + '">' +
@@ -75,13 +72,11 @@ export function render(list) {
     '</div>';
   }).join('');
 
-  // Wire up swipe & delete listeners
   setTimeout(() => {
     document.querySelectorAll('#schedule-list .swipe-content').forEach((e) => initSwipe(e));
     document.querySelectorAll('#schedule-list .swipe-container').forEach((c, i) => {
       const bg = c.querySelector('.swipe-bg');
       if (bg) bg.addEventListener('click', () => {
-        // Dispatch to the global openDelete — imported via window
         if (window.openDelete) window.openDelete(i);
       });
     });
