@@ -5,75 +5,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DailyJobs</title>
 <link rel="stylesheet" type="text/css" href="/internal/insets.css" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 </head>
 <body>
+
+<!-- ── Top App Bar ── -->
 <md-list aria-label="top-app-bar" class="top-app-bar">
   <md-list-item>
     <span slot="headline" class="app-title">DailyJobs</span>
+    <span slot="supporting-text" class="app-subtitle">Task scheduler</span>
   </md-list-item>
 </md-list>
 
-<md-tabs aria-label="tabs">
+<!-- ── Tabs ── -->
+<md-tabs aria-label="Navigate">
   <md-primary-tab id="tab-jobs" onclick="switchTab('jobs')">Jobs</md-primary-tab>
   <md-primary-tab id="tab-config" onclick="switchTab('config')">Config</md-primary-tab>
 </md-tabs>
 
+<!-- ══════════════════════════════════════════════════
+     Jobs Tab
+     ══════════════════════════════════════════════════ -->
 <div class="tab-page" id="page-jobs">
+
+  <!-- Timeline -->
   <section>
     <div class="section-header">
       <h2>Schedule</h2>
-      <span class="count" id="job-count">0</span>
+      <span class="job-count" id="job-count">0</span>
     </div>
     <div class="timeline" id="schedule-list">
-      <div class="empty-state">
+      <div class="timeline-empty">
         <div class="empty-icon material-symbols-outlined">alarm</div>
-        <p>No scheduled jobs yet</p>
-        <span>Add one below</span>
+        <p>No jobs scheduled</p>
+        <span class="empty-hint">Add one below</span>
       </div>
     </div>
   </section>
 
+  <!-- Add Job Form -->
   <section>
-    <div class="section-header"><h2>Built-in Jobs</h2></div>
+    <div class="section-header"><h2>New Job</h2></div>
     <div class="form-card">
       <div class="form-row">
         <md-outlined-text-field label="Time" type="time" id="new-time" value="22:00" class="grow"></md-outlined-text-field>
         <md-outlined-select label="Action" id="new-action" class="grow"></md-outlined-select>
       </div>
       <div class="form-actions">
-        <md-filled-button onclick="add()" class="full-btn">Add job</md-filled-button>
+        <md-outlined-button onclick="document.getElementById('new-time').value='';document.getElementById('new-action').value=''">Clear</md-outlined-button>
+        <md-filled-button onclick="add()">Add job</md-filled-button>
       </div>
     </div>
   </section>
+
 </div>
 
+<!-- ══════════════════════════════════════════════════
+     Config Tab
+     ══════════════════════════════════════════════════ -->
 <div class="tab-page" id="page-config" style="display:none">
+
+  <!-- Custom Jobs -->
   <section>
-    <div class="section-header"><h2>Custom Jobs</h2></div>
+    <div class="section-header"><h2>Custom Scripts</h2></div>
     <div class="form-card">
       <md-outlined-text-field label="Script name" id="custom-name" placeholder="my-script (without .sh)" class="full"></md-outlined-text-field>
-      <md-outlined-text-field label="Script content" id="custom-args" type="textarea" rows="4" placeholder="#!/system/bin/sh&#10;echo test > /sdcard/log.txt" class="full" style="margin-top:12px"></md-outlined-text-field>
+      <md-outlined-text-field label="Script content" id="custom-args" type="textarea" rows="4" placeholder="#!/system/bin/sh&#10;echo test &gt; /sdcard/log.txt" class="full" style="margin-top:12px"></md-outlined-text-field>
       <div class="form-actions">
         <md-filled-button onclick="addCustom()" class="full-btn">Create script</md-filled-button>
       </div>
     </div>
   </section>
 
-  <section style="margin-top:24px">
-    <div class="section-header"><h2>Edit Config</h2></div>
+  <!-- Edit Config -->
+  <section style="margin-top:20px">
+    <div class="section-header"><h2>Config</h2></div>
     <div class="form-card">
-      <md-outlined-text-field label="config.txt" id="config-text" type="textarea" rows="14" placeholder="Loading config..." readonly class="full"></md-outlined-text-field>
+      <md-outlined-text-field label="config.txt" id="config-text" type="textarea" rows="14" placeholder="Loading config…" readonly class="full"></md-outlined-text-field>
       <div class="form-actions">
         <md-icon-button onclick="loadConfigFile()" aria-label="Reload config" title="Reload config">
           <md-icon>refresh</md-icon>
         </md-icon-button>
-        <md-filled-button onclick="saveConfigFile()">Apply</md-filled-button>
+        <md-filled-button onclick="saveConfigFile()">Apply changes</md-filled-button>
       </div>
     </div>
   </section>
+
 </div>
 
+<!-- ── Edit Dialog ── -->
 <md-dialog id="edit-dialog">
   <div slot="headline" id="edit-title">Edit job</div>
   <form slot="content" id="edit-form" method="dialog">
@@ -89,10 +111,11 @@
   </div>
 </md-dialog>
 
+<!-- ── Delete Dialog ── -->
 <md-dialog id="delete-dialog">
-  <div slot="headline">Delete job?</div>
+  <div slot="headline">Remove job?</div>
   <form slot="content" id="delete-form" method="dialog">
-    <p style="color:var(--muted);font-size:14px">This cannot be undone.</p>
+    <p class="dialog-desc">This entry will be removed from the schedule.</p>
     <label class="checkbox-row" id="del-file-row" style="display:none">
       <md-checkbox id="del-file" touch-target="wrapper" aria-label="Also delete script file"></md-checkbox>
       <span>Also delete script file</span>
@@ -104,6 +127,7 @@
   </div>
 </md-dialog>
 
+<!-- ── Toast ── -->
 <div class="toast" id="toast"></div>
 
 <script type="module" src="index.js"></script>
