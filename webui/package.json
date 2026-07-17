@@ -1,0 +1,16 @@
+{
+  "name": "dailyjobs-webui",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --emptyOutDir"
+  },
+  "dependencies": {
+    "kernelsu-alt": "^3.1.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

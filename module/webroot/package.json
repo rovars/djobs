@@ -1,7 +1,0 @@
-{
-  "name": "dailyjobs-webui",
-  "private": true,
-  "scripts": {
-    "start": "npx http-server -p 8081 -c-1"
-  }
-}
