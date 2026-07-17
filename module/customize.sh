@@ -4,20 +4,9 @@ CUSTOM_DIR=/data/adb/dailyjobs/custom
 
 mkdir -p /data/adb/dailyjobs/crontabs "$CUSTOM_DIR"
 
+# Default config (only if not present)
 if [ ! -f /data/adb/dailyjobs/config.txt ]; then
-  cat > /data/adb/dailyjobs/config.txt <<EOF
-# Format: HH:MM SCRIPT_NAME
-#   SCRIPT_NAME = nama file .sh di jobs/ (tanpa .sh)
-#
-# Built-in:
-#   22:30 data off       # matikan data jam 22:30
-#   07:00 data on        # hidupkan data jam 07:00
-#   23:00 airplane on    # mode pesawat jam 23:00
-#   06:00 airplane off   # matikan mode pesawat jam 06:00
-#
-# Custom (buat dulu via WebUI > Custom Jobs):
-#   12:00 my-logger      # jalankan /data/adb/dailyjobs/custom/my-logger.sh
-EOF
+  cp "$MODPATH/config.txt" /data/adb/dailyjobs/config.txt
 fi
 
 # Startup via service.d (lebih tahan Doze)
@@ -33,12 +22,6 @@ sleep 30
 EOF
 chmod 0755 "$SERVICE_D/dailyjobs.sh"
 
-# Uninstaller
-cat > "$MODPATH/uninstall.sh" <<EOF
-#!/system/bin/sh
-rm -f /data/adb/service.d/dailyjobs.sh
-rm -rf /data/adb/dailyjobs
-EOF
-chmod 0755 "$MODPATH/uninstall.sh"
+# Uninstaller (module/uninstall.sh is run automatically by Magisk/KSU on uninstall)
 
 sh "$MODPATH/update-cron.sh"
