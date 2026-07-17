@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/sh
 # DailyJobs service script (run automatically by Magisk/KSU at boot).
 # Restarts the scheduler so the crontab is (re)built after every boot.
 PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH

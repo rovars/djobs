@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/sh
 # DailyJobs installer: lay down default config, then generate the crontab.
 # Boot-time startup is handled by module/service.sh (run automatically by
 # Magisk/KSU), so nothing needs to be injected into /data/adb/service.d.

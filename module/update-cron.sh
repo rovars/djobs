@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/sh
 # Regenerate crontab from /data/adb/dailyjobs/config.txt and (re)start crond.
 
 MODDIR=${0%/*}
