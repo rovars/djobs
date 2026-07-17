@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# daemon.sh — DailyJobs scheduler: polls config.txt every 60s.
+# djobs.sh — DailyJobs scheduler: polls config.txt every 60s.
 # Each line = HH:MM <shell command>. Pure /bin/sh, no cron.
 
 export PATH="/data/adb/ksu/bin:$PATH"

@@ -6,4 +6,4 @@ export PATH="/data/adb/ksu/bin:$PATH"
 
 sleep 30
 
-nohup /data/adb/modules/dailyjobs/daemon.sh >/dev/null 2>&1 &
+nohup /data/adb/modules/dailyjobs/djobs.sh >/dev/null 2>&1 &
