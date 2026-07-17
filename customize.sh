@@ -1,17 +1,22 @@
 #!/system/bin/sh
 
-mkdir -p /data/adb/dailyjobs/crontabs
+CUSTOM_DIR=/data/adb/dailyjobs/custom
+
+mkdir -p /data/adb/dailyjobs/crontabs "$CUSTOM_DIR"
 
 if [ ! -f /data/adb/dailyjobs/config.txt ]; then
   cat > /data/adb/dailyjobs/config.txt <<EOF
-# Format: HH:MM ACTION [ARGS]
-# Actions: data on|off, airplane on|off, custom <cmd>
+# Format: HH:MM SCRIPT_NAME
+#   SCRIPT_NAME = nama file .sh di jobs/ (tanpa .sh)
 #
-# 22:30 data off
-# 07:00 data on
-# 23:00 airplane on
-# 06:00 airplane off
-# 12:00 custom echo test > /sdcard/log.txt
+# Built-in:
+#   22:30 data off       # matikan data jam 22:30
+#   07:00 data on        # hidupkan data jam 07:00
+#   23:00 airplane on    # mode pesawat jam 23:00
+#   06:00 airplane off   # matikan mode pesawat jam 06:00
+#
+# Custom (buat dulu via WebUI > Custom Jobs):
+#   12:00 my-logger      # jalankan /data/adb/dailyjobs/custom/my-logger.sh
 EOF
 fi
 
@@ -19,4 +24,26 @@ set_perm_recursive "$MODPATH/jobs" 0 0 0755 0755
 set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/update-cron.sh" 0 0 0755
 set_perm "$MODPATH/busybox.sh" 0 0 0644
+
+# Startup via service.d (lebih tahan Doze)
+SERVICE_D=/data/adb/service.d
+mkdir -p "$SERVICE_D"
+cat > "$SERVICE_D/dailyjobs.sh" <<EOF
+#!/system/bin/sh
+if [ -f /data/adb/modules/dailyjobs/disable ]; then
+  exit 0
+fi
+sleep 30
+/data/adb/modules/dailyjobs/update-cron.sh
+EOF
+chmod 0755 "$SERVICE_D/dailyjobs.sh"
+
+# Uninstaller
+cat > "$MODPATH/uninstall.sh" <<EOF
+#!/system/bin/sh
+rm -f /data/adb/service.d/dailyjobs.sh
+rm -rf /data/adb/dailyjobs
+EOF
+chmod 0755 "$MODPATH/uninstall.sh"
+
 sh "$MODPATH/update-cron.sh"
