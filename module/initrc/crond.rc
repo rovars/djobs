@@ -13,7 +13,6 @@ service dailyjobs-crond /data/adb/modules/dailyjobs/run-crond.sh
     user root
     group root
     disabled
-    seclabel u:r:ksu:s0
     oom_score_adj -1000
 
 on property:sys.boot_completed=1

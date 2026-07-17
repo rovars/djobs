@@ -21,7 +21,7 @@ if [ -f "$LOG_FILE" ]; then
   [ "$size" -gt 512000 ] && : > "$LOG_FILE"
 fi
 
-if ! busybox crond -h >/dev/null 2>&1; then
+if ! command -v crond >/dev/null 2>&1; then
   echo "$(date) dailyjobs: busybox crond not found, will retry on next start" >> "$LOG_FILE"
   exit 0
 fi
