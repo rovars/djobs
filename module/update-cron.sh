@@ -9,12 +9,8 @@ LOG_FILE=/data/adb/dailyjobs/cron.log
 JOBS_DIR=/data/adb/modules/dailyjobs/jobs
 CUSTOM_DIR=/data/adb/dailyjobs/custom
 
-# Resolve busybox (KSU/Magisk/APatch all expose it; prefer PATH, then known locations)
-BB=$(command -v busybox 2>/dev/null)
-[ -z "$BB" ] && [ -f /data/adb/magisk/busybox ] && BB=/data/adb/magisk/busybox
-[ -z "$BB" ] && [ -f /data/adb/ksu/bin/busybox ] && BB=/data/adb/ksu/bin/busybox
-[ -z "$BB" ] && [ -f /data/adb/ap/bin/busybox ] && BB=/data/adb/ap/bin/busybox
-[ -z "$BB" ] && BB=busybox
+# Busybox is provided on PATH by Magisk/KSU/APatch (see service.sh / customize.sh).
+BB=busybox
 
 mkdir -p "$CRON_DIR" "$CUSTOM_DIR"
 : > "$CRON_FILE"

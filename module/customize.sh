@@ -3,6 +3,7 @@
 # Boot-time startup is handled by module/service.sh (run automatically by
 # Magisk/KSU), so nothing needs to be injected into /data/adb/service.d.
 
+PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH
 CUSTOM_DIR=/data/adb/dailyjobs/custom
 
 mkdir -p /data/adb/dailyjobs/crontabs "$CUSTOM_DIR"
