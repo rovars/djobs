@@ -46,9 +46,10 @@ body {
 /* ---- Top App Bar ---- */
 .top-app-bar {
   background: var(--bg);
-  padding: 10px 0 0;
+  padding: 10px 0 0 0;
   --md-list-container-color: transparent;
   --md-list-item-label-text-color: #fff;
+  --md-list-item-leading-space: 0;
 }
 .app-title {
   font-family: var(--font-display);
