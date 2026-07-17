@@ -15,6 +15,10 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
   cp "$MODPATH/config.txt" /data/adb/dailyjobs/config.txt
 fi
 
+# Ensure scripts are executable
+chmod +x "$MODPATH/run-crond.sh" "$MODPATH/update-cron.sh"
+chmod +x "$MODPATH/jobs/"*.sh
+
 # Symlink runtime data into module dir for WebUI fetch
 rm -rf "$MODPATH/dailyjobs"
 ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
