@@ -6,7 +6,9 @@ LOG_FILE=/data/adb/dailyjobs/cron.log
 JOBS_DIR=/data/adb/modules/dailyjobs/jobs
 CUSTOM_DIR=/data/adb/dailyjobs/custom
 
-. "$MODDIR/busybox.sh"
+busybox=/data/adb/magisk/busybox
+[ -f /data/adb/ksu/bin/busybox ] && busybox=/data/adb/ksu/bin/busybox
+[ -f /data/adb/ap/bin/busybox ] && busybox=/data/adb/ap/bin/busybox
 
 mkdir -p /data/adb/dailyjobs/crontabs "$CUSTOM_DIR"
 : > "$CRON_FILE"
