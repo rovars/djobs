@@ -19,6 +19,12 @@ BB=$(command -v busybox 2>/dev/null)
 mkdir -p "$CRON_DIR" "$CUSTOM_DIR"
 : > "$CRON_FILE"
 
+# Sanity check: this busybox must provide crond, otherwise the scheduler can't run
+if ! $BB crond -h >/dev/null 2>&1 && [ "$($BB 2>&1 | grep -c crond)" = "0" ]; then
+  echo "$(date) ERROR: busybox ($BB) has no crond applet" >> "$LOG_FILE"
+  exit 1
+fi
+
 # Stop any previous instance
 $BB pkill -f "busybox crond.*dailyjobs" 2>/dev/null
 

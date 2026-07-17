@@ -287,6 +287,16 @@ async function loadConfigFile() {
 async function saveConfigFile() {
   const el = $('config-text');
   const content = el.value;
+  // Validate every non-blank, non-comment line before overwriting
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!t || t[0] === '#') continue;
+    if (!/^\d{2}:\d{2}\s+\S+/.test(t)) {
+      toastMsg('Invalid line ' + (i + 1) + ': ' + t);
+      return;
+    }
+  }
   try {
     const b64 = utf8ToBase64(content);
     await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
