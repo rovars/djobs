@@ -1,2 +1,2 @@
 #!/system/bin/sh
-su -c "svc data enable"
+svc data enable
