@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 *.swp
 package-lock.json
+!webui/package-lock.json
 
 # Generated webui build output (run: cd webui && npm run build)
 module/webroot/
