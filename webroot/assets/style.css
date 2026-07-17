@@ -65,8 +65,8 @@ header h1{margin-right:auto;font-size:20px;font-weight:600;letter-spacing:-.3px;
 .job-row{display:flex;align-items:stretch;flex:1}
 .job-row.disabled{opacity:.33}
 .job-indicator{width:4px;flex-shrink:0}
-.job-indicator.data{background:var(--amber)}
-.job-indicator.airplane{background:var(--cyan)}
+.job-indicator.amber{background:var(--amber)}
+.job-indicator.cyan{background:var(--cyan)}
 .job-indicator.pink{background:#ec4899}
 .job-indicator.lime{background:#65a30d}
 .job-indicator.orange{background:#f97316}
