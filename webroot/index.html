@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DailyJobs</title>
+<link rel="stylesheet" type="text/css" href="/internal/insets.css" />
+<link rel="stylesheet" type="text/css" href="assets/style.css" />
+</head>
+<body>
+
+<header>
+  <h1>DailyJobs</h1>
+  <button class="btn-icon" onclick="restart()" title="Restart scheduler">⟳</button>
+</header>
+
+<section>
+  <div class="section-header">
+    <h2>Schedule</h2>
+    <span class="count" id="job-count">0</span>
+  </div>
+  <div class="timeline" id="schedule-list">
+    <div class="empty-state">
+      <div class="empty-icon">⏰</div>
+      <p>No scheduled jobs yet</p>
+      <span>Add one below</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-header"><h2>Built-in Jobs</h2></div>
+  <div class="form-card">
+    <div class="form-row">
+      <div class="field">
+        <label for="new-time">Time</label>
+        <input type="time" id="new-time" value="22:00">
+      </div>
+      <div class="field">
+        <label for="new-action">Action</label>
+        <select id="new-action"></select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="add()">Add job</button>
+    </div>
+  </div>
+</section>
+
+<section style="margin-top:24px">
+  <div class="section-header"><h2>Custom Jobs</h2></div>
+  <div class="form-card">
+    <div class="field">
+      <label for="custom-name">Script name</label>
+      <input type="text" id="custom-name" placeholder="my-script (tanpa .sh)">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <textarea id="custom-args" rows="4" placeholder="#!/system/bin/sh&#10;echo test > /sdcard/log.txt" style="width:100%;background:var(--bg);border:1px solid var(--card-border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--mono);outline:none;resize:vertical"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addCustom()">Create script</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-overlay" id="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <div class="modal-header" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
