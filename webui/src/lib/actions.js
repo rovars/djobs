@@ -110,8 +110,7 @@ export async function addCustom() {
     const b64  = utf8ToBase64(content);
     const path = CUSTOM_DIR + '/' + name + '.sh';
     await run('mkdir -p ' + esc(CUSTOM_DIR));
-    await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(path));
-    await run('chmod 755 ' + esc(path));
+    await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(path) + ' && chmod 755 ' + esc(path));
     await run('sh ' + esc(UPD));
     toastMsg('Script created');
     $('custom-name').value = '';
