@@ -23,6 +23,22 @@ function parseConfig(text) {
   return out;
 }
 
+// Rebuild the whole config file from the entry array (avoids line-number drift).
+// Disabled entries are written back commented out, preserving their order.
+function serializeConfig(entries) {
+  return entries.map((e) => {
+    const body = e.time + ' ' + e.action + (e.sub ? ' ' + e.sub : '');
+    return e.disabled ? '# ' + body : body;
+  }).join('\n') + '\n';
+}
+
+async function writeConfigFile(entries) {
+  const content = serializeConfig(entries);
+  const b64 = utf8ToBase64(content);
+  await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
+  await run('sh ' + esc(UPD));
+}
+
 function $(id) { return document.getElementById(id); }
 
 function toastMsg(msg) {
@@ -149,11 +165,8 @@ async function toggle(idx) {
   try {
     const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
     if (idx >= entries.length) return;
-    const line = entries[idx].line + 1;
-    await run(entries[idx].disabled
-      ? "sed -i '" + line + "s/^# *//' " + esc(CFG)
-      : "sed -i '" + line + "s/^/# /' " + esc(CFG));
-    await run('sh ' + esc(UPD));
+    entries[idx].disabled = !entries[idx].disabled;
+    await writeConfigFile(entries);
     toastMsg('Toggled');
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
@@ -184,12 +197,9 @@ async function saveEdit(idx) {
   try {
     const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
     if (idx >= entries.length) return;
-    const e = entries[idx];
-    const line = e.line + 1;
-    await run("sed -i '" + line + "s/^\\(# \\{0,1\\}\\)[0-2][0-9]:[0-5][0-9]/\\1" + newTime + "/' " + esc(CFG));
-    if (e.disabled !== newDisabled)
-      await run(newDisabled ? "sed -i '" + line + "s/^/# /' " + esc(CFG) : "sed -i '" + line + "s/^# *//' " + esc(CFG));
-    await run('sh ' + esc(UPD));
+    entries[idx].time = newTime;
+    entries[idx].disabled = newDisabled;
+    await writeConfigFile(entries);
     toastMsg('Saved');
     load();
     closeModal(null);
@@ -219,8 +229,8 @@ async function doDel(idx) {
     const e = entries[idx];
     if (e.action !== 'data' && e.action !== 'airplane' && $('del-file') && $('del-file').checked)
       await run('rm -f ' + esc(CUSTOM_DIR + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh') + ' ' + esc(JOBS_DIR + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh') + ' 2>/dev/null');
-    await run('sed -i "' + (e.line + 1) + 'd" ' + esc(CFG));
-    await run('sh ' + esc(UPD));
+    entries.splice(idx, 1);
+    await writeConfigFile(entries);
     toastMsg('Deleted');
     load();
     closeModal(null);
