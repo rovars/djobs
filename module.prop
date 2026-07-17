@@ -4,3 +4,4 @@ version=v1.2
 versionCode=3
 author=Dee
 description=Auto data off, airplane mode & custom commands scheduler with WebUI
+updateJson=https://raw.githubusercontent.com/Dee/djobs/master/update.json
