@@ -3,7 +3,7 @@
 # Called by init via initrc/crond.rc at boot_completed.
 # Builds crontab then exec's crond -f so init tracks its PID directly.
 
-export PATH="/data/adb/ksu/bin:/system/bin:/system/xbin:$PATH"
+export PATH="/data/adb/ksu/bin:$PATH"
 
 MODDIR=/data/adb/modules/dailyjobs
 CONFIG=/data/adb/dailyjobs/config.txt

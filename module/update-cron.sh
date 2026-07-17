@@ -5,7 +5,7 @@
 #   - run-crond.sh          once at boot (via initrc)
 #   - WebUI                 on every add/edit/toggle/delete
 
-export PATH="/data/adb/ksu/bin:/system/bin:/system/xbin:$PATH"
+export PATH="/data/adb/ksu/bin:$PATH"
 
 CONFIG=/data/adb/dailyjobs/config.txt
 CRON_DIR=/data/adb/dailyjobs/crontabs
