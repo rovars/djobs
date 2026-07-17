@@ -1,5 +1,9 @@
 import { exec, toast } from 'kernelsu-alt';
+import '@material/web/all.js';
+import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js';
 import './style.css';
+
+document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
 
 const CFG = '/data/adb/dailyjobs/config.txt';
 const UPD = '/data/adb/modules/dailyjobs/update-cron.sh';
@@ -21,22 +25,6 @@ function parseConfig(text) {
     if (m) out.push({ line: i, time: m[1], action: m[2], sub: m[3], disabled: off });
   }
   return out;
-}
-
-// Rebuild the whole config file from the entry array (avoids line-number drift).
-// Disabled entries are written back commented out, preserving their order.
-function serializeConfig(entries) {
-  return entries.map((e) => {
-    const body = e.time + ' ' + e.action + (e.sub ? ' ' + e.sub : '');
-    return e.disabled ? '# ' + body : body;
-  }).join('\n') + '\n';
-}
-
-async function writeConfigFile(entries) {
-  const content = serializeConfig(entries);
-  const b64 = utf8ToBase64(content);
-  await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
-  await run('sh ' + esc(UPD));
 }
 
 function $(id) { return document.getElementById(id); }
@@ -68,16 +56,28 @@ function label(s) {
   return '<span class="type">' + s.action.charAt(0).toUpperCase() + s.action.slice(1) + '</span>' + (s.sub ? ' ' + s.sub : '');
 }
 
-function modal(html) { $('modal-overlay').style.display = 'flex'; $('modal-content').innerHTML = html; }
-function closeModal(e) { if (!e || e.target === $('modal-overlay')) $('modal-overlay').style.display = 'none'; }
-
 async function run(cmd) {
   const r = await exec(cmd);
   if (r.errno !== 0) throw new Error((r.stderr || '').trim() || 'command failed');
   return r;
 }
 
-// Swipe to delete
+// ---- config file helpers (full-file rewrite) ----
+function serializeConfig(entries) {
+  return entries.map((e) => {
+    const body = e.time + ' ' + e.action + (e.sub ? ' ' + e.sub : '');
+    return e.disabled ? '# ' + body : body;
+  }).join('\n') + '\n';
+}
+
+async function writeConfigFile(entries) {
+  const content = serializeConfig(entries);
+  const b64 = utf8ToBase64(content);
+  await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
+  await run('sh ' + esc(UPD));
+}
+
+// ---- swipe to delete ----
 const touchCtx = { el: null, startX: 0, currentX: 0, swiped: false };
 function initSwipe(el) {
   let confirmed = false;
@@ -121,13 +121,13 @@ function render(list) {
   }
   el.innerHTML = list.map((s, idx) => {
     const c = badgeColor(s.action, idx);
-    return '<div class="swipe-container"><div class="swipe-bg">Delete</div><div class="swipe-content" data-idx="' + idx + '"><div class="job-row' + (s.disabled ? ' disabled' : '') + '"><div class="job-indicator ' + c + '"></div><div class="job-body" onclick="editEntry(' + idx + ')"><span class="job-time">' + s.time + '</span><span class="job-label">' + label(s) + '</span></div><div class="job-actions"><label class="toggle"><input type="checkbox"' + (s.disabled ? '' : ' checked') + ' onchange="toggle(' + idx + ')"><span class="slider"></span></label></div></div></div></div>';
+    return '<div class="swipe-container"><div class="swipe-bg">Delete</div><div class="swipe-content" data-idx="' + idx + '"><div class="job-row' + (s.disabled ? ' disabled' : '') + '"><div class="job-indicator ' + c + '"></div><div class="job-body" onclick="openEdit(' + idx + ')"><span class="job-time">' + s.time + '</span><span class="job-label">' + label(s) + '</span></div><div class="job-actions"><md-switch' + (s.disabled ? '' : ' selected') + ' onclick="event.stopPropagation()" onchange="toggle(' + idx + ', this)"></md-switch></div></div></div></div>';
   }).join('');
   setTimeout(() => {
     document.querySelectorAll('#schedule-list .swipe-content').forEach((e) => initSwipe(e));
     document.querySelectorAll('#schedule-list .swipe-container').forEach((c, i) => {
       const bg = c.querySelector('.swipe-bg');
-      if (bg) bg.addEventListener('click', () => confirmDel(i));
+      if (bg) bg.addEventListener('click', () => openDelete(i));
     });
   }, 50);
 }
@@ -144,16 +144,21 @@ async function loadScripts() {
       seen[f] = true;
       const parts = f.replace(/\.sh$/, '').split('_');
       const name = parts.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      sel.add(new Option(name, parts.join(' ')));
+      const opt = document.createElement('md-select-option');
+      opt.value = parts.join(' ');
+      opt.innerHTML = '<div slot="headline">' + name + '</div>';
+      sel.appendChild(opt);
     });
   });
 }
 
+let currentEntries = [];
 async function load() {
   await loadScripts();
   try {
     const r = await run('cat ' + esc(CFG));
-    render(parseConfig(r.stdout));
+    currentEntries = parseConfig(r.stdout);
+    render(currentEntries);
   } catch (e) {
     const el = $('schedule-list');
     if (el) el.innerHTML = '<div class="empty-state"><p>Failed to load config</p></div>';
@@ -161,79 +166,60 @@ async function load() {
   }
 }
 
-async function toggle(idx) {
+async function toggle(idx, sw) {
   try {
-    const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
-    if (idx >= entries.length) return;
-    entries[idx].disabled = !entries[idx].disabled;
-    await writeConfigFile(entries);
+    currentEntries[idx].disabled = !sw.selected;
+    await writeConfigFile(currentEntries);
     toastMsg('Toggled');
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
-async function editEntry(idx) {
-  try {
-    const e = parseConfig((await run('cat ' + esc(CFG))).stdout)[idx];
-    if (!e) return;
-    modal(
-      '<div class="modal-header"><h3>Edit job</h3></div>' +
-      '<div class="modal-body">' +
-        '<div class="field" style="margin-bottom:12px"><label>Time</label>' +
-          '<input type="time" id="edit-time" value="' + e.time + '" style="width:100%;background:var(--bg);border:1px solid var(--card-border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:14px;font-family:var(--mono);outline:none"></div>' +
-        '<div class="field" style="margin-bottom:12px"><label>Status</label>' +
-          '<label class="toggle" style="display:inline-block"><input type="checkbox" id="edit-disabled"' + (e.disabled ? '' : ' checked') + '><span class="slider"></span></label></div>' +
-      '</div>' +
-      '<div class="modal-actions" style="display:flex;gap:8px">' +
-        '<button class="btn btn-primary" onclick="saveEdit(' + idx + ')" style="flex:1">Save</button>' +
-        '<button class="btn btn-ghost" onclick="closeModal(null)" style="flex:1">Cancel</button></div>');
-  } catch (x) { toastMsg('Error: ' + x.message); }
+let editIdx = -1;
+function openEdit(idx) {
+  editIdx = idx;
+  const e = currentEntries[idx];
+  if (!e) return;
+  $('edit-time').value = e.time;
+  $('edit-disabled').selected = !e.disabled;
+  $('edit-dialog').show();
 }
 
-async function saveEdit(idx) {
+async function saveEditFromDialog() {
   const newTime = $('edit-time').value;
-  const newDisabled = !$('edit-disabled').checked;
+  const newDisabled = !$('edit-disabled').selected;
   if (!newTime) return toastMsg('Pick a time');
   try {
-    const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
-    if (idx >= entries.length) return;
-    entries[idx].time = newTime;
-    entries[idx].disabled = newDisabled;
-    await writeConfigFile(entries);
+    currentEntries[editIdx].time = newTime;
+    currentEntries[editIdx].disabled = newDisabled;
+    await writeConfigFile(currentEntries);
     toastMsg('Saved');
+    $('edit-dialog').close();
     load();
-    closeModal(null);
   } catch (x) { toastMsg('Error: ' + x.message); }
 }
 
-async function confirmDel(idx) {
-  try {
-    const e = parseConfig((await run('cat ' + esc(CFG))).stdout)[idx];
-    if (!e) return;
-    const isCustom = e.action !== 'data' && e.action !== 'airplane';
-    modal(
-      '<div class="modal-header"><h3>Delete job?</h3></div>' +
-      '<div class="modal-body"><p style="color:var(--muted);font-size:14px">This cannot be undone.</p>' +
-        (isCustom ? '<label class="checkbox-row"><input type="checkbox" id="del-file" checked><span> Also delete script file</span></label>' : '') +
-      '</div>' +
-      '<div class="modal-actions" style="display:flex;gap:8px">' +
-        '<button class="btn" onclick="doDel(' + idx + ')" style="flex:1;background:#ef4444;color:#fff">Delete</button>' +
-        '<button class="btn btn-ghost" onclick="closeModal(null)" style="flex:1">Cancel</button></div>');
-  } catch (x) { toastMsg('Error: ' + x.message); }
+let delIdx = -1;
+function openDelete(idx) {
+  delIdx = idx;
+  const e = currentEntries[idx];
+  if (!e) return;
+  const isCustom = e.action !== 'data' && e.action !== 'airplane';
+  $('del-file-row').style.display = isCustom ? 'flex' : 'none';
+  if (isCustom) $('del-file').checked = true;
+  $('delete-dialog').show();
 }
 
-async function doDel(idx) {
+async function doDelFromDialog() {
   try {
-    const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
-    if (idx >= entries.length) return;
-    const e = entries[idx];
+    const e = currentEntries[delIdx];
     if (e.action !== 'data' && e.action !== 'airplane' && $('del-file') && $('del-file').checked)
       await run('rm -f ' + esc(CUSTOM_DIR + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh') + ' ' + esc(JOBS_DIR + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh') + ' 2>/dev/null');
-    entries.splice(idx, 1);
-    await writeConfigFile(entries);
+    currentEntries.splice(delIdx, 1);
+    await writeConfigFile(currentEntries);
     toastMsg('Deleted');
+    $('delete-dialog').close();
     load();
-    closeModal(null);
   } catch (x) { toastMsg('Error: ' + x.message); }
 }
 
@@ -245,12 +231,11 @@ async function add() {
   const action = parts[0];
   const sub = parts.slice(1).join(' ');
   try {
-    const entries = parseConfig((await run('cat ' + esc(CFG))).stdout);
-    for (let i = 0; i < entries.length; i++)
-      if (entries[i].time === time && entries[i].action === action && entries[i].sub === sub)
+    for (let i = 0; i < currentEntries.length; i++)
+      if (currentEntries[i].time === time && currentEntries[i].action === action && currentEntries[i].sub === sub)
         return toastMsg('Already exists');
-    await run('echo ' + esc(time + ' ' + action + (sub ? ' ' + sub : '')) + ' >> ' + esc(CFG));
-    await run('sh ' + esc(UPD));
+    currentEntries.push({ time, action, sub, disabled: false });
+    await writeConfigFile(currentEntries);
     toastMsg('Job added');
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
@@ -278,7 +263,6 @@ async function restart() {
   catch (e) { toastMsg('Error: ' + e.message); }
 }
 
-// Direct config file editing (uses the module/dailyjobs symlink -> /data/adb/dailyjobs)
 async function loadConfigFile() {
   const el = $('config-text');
   try {
@@ -297,7 +281,6 @@ async function loadConfigFile() {
 async function saveConfigFile() {
   const el = $('config-text');
   const content = el.value;
-  // Validate every non-blank, non-comment line before overwriting
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
@@ -316,27 +299,26 @@ async function saveConfigFile() {
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
-window.editEntry = editEntry;
-window.saveEdit = saveEdit;
-window.confirmDel = confirmDel;
-window.doDel = doDel;
-window.toggle = toggle;
-window.add = add;
-window.addCustom = addCustom;
-window.restart = restart;
-window.loadConfigFile = loadConfigFile;
-window.saveConfigFile = saveConfigFile;
-window.closeModal = closeModal;
-window.switchTab = switchTab;
-
 function switchTab(tab) {
   const isJobs = tab === 'jobs';
   $('page-jobs').style.display = isJobs ? '' : 'none';
   $('page-config').style.display = isJobs ? 'none' : '';
-  $('tab-jobs').classList.toggle('active', isJobs);
-  $('tab-config').classList.toggle('active', !isJobs);
+  $('tab-jobs').active = isJobs;
+  $('tab-config').active = !isJobs;
   if (!isJobs) loadConfigFile();
 }
+
+window.switchTab = switchTab;
+window.restart = restart;
+window.add = add;
+window.addCustom = addCustom;
+window.toggle = toggle;
+window.openEdit = openEdit;
+window.saveEditFromDialog = saveEditFromDialog;
+window.openDelete = openDelete;
+window.doDelFromDialog = doDelFromDialog;
+window.loadConfigFile = loadConfigFile;
+window.saveConfigFile = saveConfigFile;
 
 loadConfigFile();
 load();
