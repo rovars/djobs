@@ -33,8 +33,8 @@ jobs:
 
     - name: Set variables
       run: |
-        VERSION=$(grep '^version=' module.prop | cut -d= -f2)
-        VERSIONCODE=$(grep '^versionCode=' module.prop | cut -d= -f2)
+        VERSION=$(grep '^version=' module/module.prop | cut -d= -f2)
+        VERSIONCODE=$(grep '^versionCode=' module/module.prop | cut -d= -f2)
         COMMIT_ID=$(git rev-parse --short HEAD)
         echo "ZIP_NAME=${{ env.MODULE_NAME }}_${VERSION}-${VERSIONCODE}-${COMMIT_ID}" >> $GITHUB_ENV
 
