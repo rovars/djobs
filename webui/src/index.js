@@ -327,6 +327,16 @@ window.restart = restart;
 window.loadConfigFile = loadConfigFile;
 window.saveConfigFile = saveConfigFile;
 window.closeModal = closeModal;
+window.switchTab = switchTab;
+
+function switchTab(tab) {
+  const isJobs = tab === 'jobs';
+  $('page-jobs').style.display = isJobs ? '' : 'none';
+  $('page-config').style.display = isJobs ? 'none' : '';
+  $('tab-jobs').classList.toggle('active', isJobs);
+  $('tab-config').classList.toggle('active', !isJobs);
+  if (!isJobs) loadConfigFile();
+}
 
 loadConfigFile();
 load();
