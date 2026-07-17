@@ -95,16 +95,6 @@ md-tabs {
   text-transform: uppercase;
   letter-spacing: .9px;
 }
-.job-count {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--accent-soft);
-  color: var(--accent);
-  padding: 2px 8px;
-  border-radius: 999px;
-  line-height: 1.4;
-}
 
 /* ---- Timeline Card ---- */
 .timeline {
@@ -188,7 +178,7 @@ md-tabs {
   text-overflow: ellipsis;
 }
 .timeline-label .tl-type {
-  opacity: .7;
+  color: var(--muted);
 }
 
 /* Actions column (switch) */
@@ -363,16 +353,6 @@ md-dialog {
   font-size: 14px;
   color: var(--text);
 }
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--text);
-  margin-top: 12px;
-}
-
 /* ---- Material Icons ---- */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
