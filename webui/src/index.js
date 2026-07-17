@@ -268,6 +268,34 @@ async function restart() {
   catch (e) { toastMsg('Error: ' + e.message); }
 }
 
+// Direct config file editing (uses the module/dailyjobs symlink -> /data/adb/dailyjobs)
+async function loadConfigFile() {
+  const el = $('config-text');
+  try {
+    const res = await fetch('./dailyjobs/config.txt', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    el.value = await res.text();
+    el.readOnly = false;
+    toastMsg('Config loaded');
+  } catch (e) {
+    el.value = '';
+    el.placeholder = 'Failed to load: ' + e.message;
+    toastMsg('Error: ' + e.message);
+  }
+}
+
+async function saveConfigFile() {
+  const el = $('config-text');
+  const content = el.value;
+  try {
+    const b64 = utf8ToBase64(content);
+    await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
+    await run('sh ' + esc(UPD));
+    toastMsg('Config saved');
+    load();
+  } catch (e) { toastMsg('Error: ' + e.message); }
+}
+
 window.editEntry = editEntry;
 window.saveEdit = saveEdit;
 window.confirmDel = confirmDel;
@@ -276,6 +304,9 @@ window.toggle = toggle;
 window.add = add;
 window.addCustom = addCustom;
 window.restart = restart;
+window.loadConfigFile = loadConfigFile;
+window.saveConfigFile = saveConfigFile;
 window.closeModal = closeModal;
 
+loadConfigFile();
 load();

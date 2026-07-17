@@ -12,6 +12,11 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
   cp "$MODPATH/config.txt" /data/adb/dailyjobs/config.txt
 fi
 
+# Expose runtime data inside the module folder for direct editing / WebUI fetch.
+# module/dailyjobs -> /data/adb/dailyjobs  (config.txt, custom/, crontabs/, ...)
+rm -rf "$MODPATH/dailyjobs"
+ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
+
 # module/uninstall.sh is executed automatically by Magisk/KSU on uninstall
 
 # Build the initial crontab

@@ -71,6 +71,19 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<section style="margin-top:24px">
+  <div class="section-header"><h2>Edit Config</h2></div>
+  <div class="form-card">
+    <div class="field">
+      <textarea id="config-text" rows="10" readonly placeholder="Loading config..." style="width:100%;background:var(--bg);border:1px solid var(--card-border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--mono);outline:none;resize:vertical"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadConfigFile()">Reload</button>
+      <button class="btn btn-primary" onclick="saveConfigFile()">Save &amp; apply</button>
+    </div>
+  </div>
+</section>
+
 <script type="module" src="index.js"></script>
 </body>
 </html>
