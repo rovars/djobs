@@ -1,12 +1,9 @@
-#!/bin/sh
-# run-crond.sh — daemon wrapper for KernelSU initrc service
-#
-# Called by init via initrc/crond.rc (or directly by service.sh as fallback).
-# Generates the crontab from config.txt, then exec's crond in foreground
-# so init tracks crond's PID directly.
+#!/system/bin/sh
+# run-crond.sh — daemon wrapper for KernelSU initrc service.
+# Called by init via initrc/crond.rc at boot_completed.
+# Builds crontab then exec's crond -f so init tracks its PID directly.
 
-# Init has a minimal PATH — add all possible busybox locations
-export PATH="/data/adb/magisk:/data/adb/ksu/bin:/data/adb/ap/bin:/system/bin:/system/xbin:$PATH"
+export PATH="/data/adb/ksu/bin:/system/bin:/system/xbin:$PATH"
 
 MODDIR=/data/adb/modules/dailyjobs
 CONFIG=/data/adb/dailyjobs/config.txt
@@ -16,31 +13,20 @@ LOG_FILE=/data/adb/dailyjobs/cron.log
 JOBS_DIR=$MODDIR/jobs
 CUSTOM_DIR=/data/adb/dailyjobs/custom
 
-busybox() {
-  for b in /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox busybox; do
-    if command -v "$b" >/dev/null 2>&1; then
-      "$b" "$@"
-      return $?
-    fi
-  done
-  return 1
-}
-
 mkdir -p "$CRON_DIR" "$CUSTOM_DIR"
 
 # Rotate log if > 500 KB
 if [ -f "$LOG_FILE" ]; then
-  size=$(busybox stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
+  size=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
   [ "$size" -gt 512000 ] && : > "$LOG_FILE"
 fi
 
-# Sanity check — if no crond, log and exit peacefully (no crash loop)
 if ! busybox crond -h >/dev/null 2>&1; then
   echo "$(date) dailyjobs: busybox crond not found, will retry on next start" >> "$LOG_FILE"
   exit 0
 fi
 
-# ---- Build crontab ----
+# === Build crontab ===
 : > "$CRON_FILE"
 
 find_script() {
@@ -78,6 +64,4 @@ chmod 644 "$CRON_FILE"
 
 echo "$(date) dailyjobs: crontab rebuilt, starting crond" >> "$LOG_FILE"
 
-# ---- Exec crond in foreground ----
-# init tracks THIS PID; when crond dies, it restarts us.
 exec busybox crond -c "$CRON_DIR" -f

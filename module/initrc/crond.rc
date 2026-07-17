@@ -1,24 +1,12 @@
-# Run-crond daemon for KernelSU initrc service.
+# Run-crond daemon for KernelSU initrc injection.
 #
-# KernelSU hooks init's read() on init.rc and appends the contents of
-# every enabled module's initrc/*.rc file. This makes init treat the
-# service definition below as part of the original init.rc — no file
-# on disk is modified.
+# KernelSU hooks init's read() on init.rc and appends this file's content
+# so init treats the service definition below as part of init.rc itself.
 #
-# The service:
-#   - Starts after sys.boot_completed=1
-#   - Runs as u:r:ksu:s0 (KernelSU's permissive domain)
-#   - Is OOM-protected (immune to LMK)
-#   - Auto-restarts on crash/exit (critical)
-#
-# For Magisk / APatch or systems where initrc injection is unavailable,
-# service.sh falls back to running run-crond.sh via nohup.
-#
-# Notes:
-#   - "disabled" so init doesn't start it before boot_completed.
-#   - seclabel is set to avoid SELinux denials for cron operations.
-#   - -1000 prevents the kernel OOM killer from targeting this process.
-#   - critical ensures instant restart — no watchdog loop needed.
+# Starts after sys.boot_completed=1.
+# Runs as u:r:ksu:s0 (KernelSU's permissive domain — no SELinux denials).
+# OOM-protected (oom_score_adj -1000 = immune to Low Memory Killer).
+# Auto-restart on crash (init restarts on exit, no watchdog needed).
 
 service dailyjobs-crond /data/adb/modules/dailyjobs/run-crond.sh
     class late_start
