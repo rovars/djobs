@@ -164,8 +164,8 @@ md-tabs {
   font-weight: 600;
   color: #fff;
   letter-spacing: -.3px;
-  min-width: 52px;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
 .timeline-label {
