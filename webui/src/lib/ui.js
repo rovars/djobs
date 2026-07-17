@@ -1,7 +1,7 @@
 /* ==========================================================
-   ui — boot, data loading, tab switching, config text editor
+   ui — boot, data loading
    ========================================================== */
-import { $, toastMsg, esc, utf8ToBase64, escHtml, tryRun, run } from './utils.js';
+import { $, toastMsg, esc, escHtml, tryRun, run } from './utils.js';
 import { parseConfig } from './config.js';
 import { render } from './render.js';
 import { setEntries } from './state.js';
@@ -9,7 +9,6 @@ import { setEntries } from './state.js';
 const JOBS_DIR = '/data/adb/modules/dailyjobs/jobs';
 const CUSTOM_DIR = '/data/adb/dailyjobs/custom';
 const CFG = '/data/adb/dailyjobs/config.txt';
-const UPD = '/data/adb/modules/dailyjobs/update-cron.sh';
 
 /* ==========================================================
    Load script names into the action <select>
@@ -60,56 +59,4 @@ export async function load() {
     }
     toastMsg('Error: ' + e.message);
   }
-}
-
-/* ==========================================================
-   Config file direct-edit tab
-   ========================================================== */
-export async function loadConfigFile() {
-  const el = $('config-text');
-  try {
-    const res = await fetch('./dailyjobs/config.txt', { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    el.value = await res.text();
-    el.readOnly = false;
-    toastMsg('Config loaded');
-  } catch (e) {
-    el.value = '';
-    el.placeholder = 'Failed to load: ' + e.message;
-    toastMsg('Error: ' + e.message);
-  }
-}
-
-export async function saveConfigFile() {
-  const el = $('config-text');
-  const content = el.value;
-  const lines = content.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].trim();
-    if (!t || t[0] === '#') continue;
-    if (!/^\d{2}:\d{2}\s+\S+/.test(t)) {
-      toastMsg('Invalid line ' + (i + 1) + ': ' + t);
-      return;
-    }
-  }
-  try {
-    const b64 = utf8ToBase64(content);
-    await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
-    await run('sh ' + esc(UPD));
-    toastMsg('Config saved');
-    load();
-    el.value = content;
-  } catch (e) { toastMsg('Error: ' + e.message); }
-}
-
-/* ==========================================================
-   Tab switching
-   ========================================================== */
-export function switchTab(tab) {
-  const isJobs = tab === 'jobs';
-  $('page-jobs').style.display   = isJobs ? '' : 'none';
-  $('page-config').style.display = isJobs ? 'none' : '';
-  $('tab-jobs').active   = isJobs;
-  $('tab-config').active = !isJobs;
-  if (!isJobs) loadConfigFile();
 }

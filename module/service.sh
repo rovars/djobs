@@ -1,10 +1,9 @@
 #!/bin/sh
 # DailyJobs service script — runs automatically at boot.
-# Generates initial crontab; crond lifecycle managed by init via initrc/crond.rc.
+# Starts the scheduler daemon in background.
 
 export PATH="/data/adb/ksu/bin:$PATH"
 
-# Wait for /data and modules to settle
 sleep 30
 
-/data/adb/modules/dailyjobs/update-cron.sh
+nohup /data/adb/modules/dailyjobs/daemon.sh >/dev/null 2>&1 &

@@ -19,15 +19,9 @@
   </md-list-item>
 </md-list>
 
-<!-- ── Tabs ── -->
-<md-tabs aria-label="Navigate">
-  <md-primary-tab id="tab-jobs" onclick="switchTab('jobs')">Jobs</md-primary-tab>
-  <md-primary-tab id="tab-config" onclick="switchTab('config')">Config</md-primary-tab>
-</md-tabs>
-
-<!-- ══════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════
      Jobs Tab
-     ══════════════════════════════════════════════════ -->
+     ════════════════════════════════════════════ -->
 <div class="tab-page" id="page-jobs">
 
   <!-- Timeline -->
@@ -54,41 +48,8 @@
         <md-outlined-select label="Action" id="new-action" class="grow"></md-outlined-select>
       </div>
       <div class="form-actions">
-        <md-outlined-button onclick="document.getElementById('new-time').value='';document.getElementById('new-action').value=''">Clear</md-outlined-button>
+        <md-outlined-button onclick="clearAddForm()">Clear</md-outlined-button>
         <md-filled-button onclick="add()">Add job</md-filled-button>
-      </div>
-    </div>
-  </section>
-
-</div>
-
-<!-- ══════════════════════════════════════════════════
-     Config Tab
-     ══════════════════════════════════════════════════ -->
-<div class="tab-page" id="page-config" style="display:none">
-
-  <!-- Custom Jobs -->
-  <section>
-    <div class="section-header"><h2>Custom Scripts</h2></div>
-    <div class="form-card">
-      <md-outlined-text-field label="Script name" id="custom-name" placeholder="my-script (without .sh)" class="full"></md-outlined-text-field>
-      <md-outlined-text-field label="Script content" id="custom-args" type="textarea" rows="4" placeholder="#!/bin/sh&#10;echo test &gt; /sdcard/log.txt" class="full" style="margin-top:12px"></md-outlined-text-field>
-      <div class="form-actions">
-        <md-filled-button onclick="addCustom()" class="full-btn">Create script</md-filled-button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Edit Config -->
-  <section style="margin-top:20px">
-    <div class="section-header"><h2>Config</h2></div>
-    <div class="form-card">
-      <md-outlined-text-field label="config.txt" id="config-text" type="textarea" rows="14" placeholder="Loading config…" readonly class="full"></md-outlined-text-field>
-      <div class="form-actions">
-        <md-icon-button onclick="loadConfigFile()" aria-label="Reload config" title="Reload config">
-          <md-icon>refresh</md-icon>
-        </md-icon-button>
-        <md-filled-button onclick="saveConfigFile()">Apply changes</md-filled-button>
       </div>
     </div>
   </section>
@@ -116,10 +77,6 @@
   <div slot="headline">Remove job?</div>
   <form slot="content" id="delete-form" method="dialog">
     <p class="dialog-desc">This entry will be removed from the schedule.</p>
-    <label class="checkbox-row" id="del-file-row" style="display:none">
-      <md-checkbox id="del-file" touch-target="wrapper" aria-label="Also delete script file"></md-checkbox>
-      <span>Also delete script file</span>
-    </label>
   </form>
   <div slot="actions">
     <md-text-button form="delete-form" value="cancel">Cancel</md-text-button>

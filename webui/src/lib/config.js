@@ -1,10 +1,9 @@
 /* ==========================================================
    config — parse, serialise, and persist config.txt
    ========================================================== */
-import { $, esc, utf8ToBase64, run } from './utils.js';
+import { esc, utf8ToBase64, run } from './utils.js';
 
 const CFG = '/data/adb/dailyjobs/config.txt';
-const UPD = '/data/adb/modules/dailyjobs/update-cron.sh';
 
 /** Parse raw config.txt text into structured entries */
 export function parseConfig(text) {
@@ -29,23 +28,9 @@ export function serializeConfig(entries) {
   }).join('\n') + '\n';
 }
 
-/** Write entries to disk and regenerate the crontab */
+/** Write entries to disk — daemon picks up changes live */
 export async function writeConfigFile(entries) {
   const content = serializeConfig(entries);
   const b64 = utf8ToBase64(content);
   await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
-  await run('sh ' + esc(UPD));
-}
-
-/** Read the current config.txt from the server (HTTP) */
-export async function fetchConfigFromWebUI() {
-  const res = await fetch('./dailyjobs/config.txt', { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return await res.text();
-}
-
-/** Read the current config.txt via shell */
-export async function readConfigFromDisk() {
-  const r = await run('cat ' + esc(CFG));
-  return r.stdout;
 }

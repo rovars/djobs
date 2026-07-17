@@ -1,14 +1,10 @@
 /* ==========================================================
    actions — CRUD handlers for schedule entries
    ========================================================== */
-import { $, toastMsg, esc, utf8ToBase64, sanitizeName, run } from './utils.js';
+import { $, toastMsg, esc, run } from './utils.js';
 import { writeConfigFile } from './config.js';
-import { getEntries, setEntries } from './state.js';
+import { getEntries } from './state.js';
 import { load } from './ui.js';
-
-const JOBS_DIR = '/data/adb/modules/dailyjobs/jobs';
-const CUSTOM_DIR = '/data/adb/dailyjobs/custom';
-const UPD = '/data/adb/modules/dailyjobs/update-cron.sh';
 
 /* ---- Toggle enable/disable ---- */
 export async function toggle(idx, sw) {
@@ -55,21 +51,12 @@ export function openDelete(idx) {
   delIdx = idx;
   const e = getEntries()[idx];
   if (!e) return;
-  const isCustom = e.action !== 'data' && e.action !== 'airplane';
-  $('del-file-row').style.display = isCustom ? 'flex' : 'none';
-  if (isCustom) $('del-file').checked = true;
   $('delete-dialog').show();
 }
 
 export async function doDelFromDialog() {
   try {
     const entries = getEntries();
-    const e = entries[delIdx];
-    if (e.action !== 'data' && e.action !== 'airplane' && $('del-file') && $('del-file').checked) {
-      const scriptBase = CUSTOM_DIR + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh';
-      const jobsBase  = JOBS_DIR  + '/' + e.action + (e.sub ? '_' + e.sub : '') + '.sh';
-      await run('rm -f ' + esc(scriptBase) + ' ' + esc(jobsBase) + ' 2>/dev/null');
-    }
     entries.splice(delIdx, 1);
     await writeConfigFile(entries);
     toastMsg('Deleted');
@@ -95,26 +82,6 @@ export async function add() {
     entries.push({ time, action, sub, disabled: false });
     await writeConfigFile(entries);
     toastMsg('Job added');
-    load();
-  } catch (e) { toastMsg('Error: ' + e.message); }
-}
-
-/* ---- Create custom script ---- */
-export async function addCustom() {
-  const name    = $('custom-name').value.trim();
-  const content = $('custom-args').value.trim();
-  if (!name)     return toastMsg('Enter script name');
-  if (!content)  return toastMsg('Enter script content');
-  if (!sanitizeName(name)) return toastMsg('Invalid name (use a-z, 0-9, . _ -)');
-  try {
-    const b64  = utf8ToBase64(content);
-    const path = CUSTOM_DIR + '/' + name + '.sh';
-    await run('mkdir -p ' + esc(CUSTOM_DIR));
-    await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(path) + ' && chmod 755 ' + esc(path));
-    await run('sh ' + esc(UPD));
-    toastMsg('Script created');
-    $('custom-name').value = '';
-    $('custom-args').value = '';
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
