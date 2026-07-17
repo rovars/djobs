@@ -5,14 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DailyJobs</title>
 <link rel="stylesheet" type="text/css" href="/internal/insets.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
 <body>
 <md-list aria-label="top-app-bar" class="top-app-bar">
   <md-list-item>
     <span slot="headline" class="app-title">DailyJobs</span>
-    <md-icon-button slot="end" onclick="restart()" title="Restart scheduler" aria-label="Restart scheduler">
-      <md-icon>refresh</md-icon>
-    </md-icon-button>
   </md-list-item>
 </md-list>
 
@@ -29,7 +27,7 @@
     </div>
     <div class="timeline" id="schedule-list">
       <div class="empty-state">
-        <div class="empty-icon">⏰</div>
+        <div class="empty-icon material-symbols-outlined">alarm</div>
         <p>No scheduled jobs yet</p>
         <span>Add one below</span>
       </div>
@@ -44,7 +42,7 @@
         <md-outlined-select label="Action" id="new-action" class="grow"></md-outlined-select>
       </div>
       <div class="form-actions">
-        <md-filled-button onclick="add()">Add job</md-filled-button>
+        <md-filled-button onclick="add()" class="full-btn">Add job</md-filled-button>
       </div>
     </div>
   </section>
@@ -54,10 +52,10 @@
   <section>
     <div class="section-header"><h2>Custom Jobs</h2></div>
     <div class="form-card">
-      <md-outlined-text-field label="Script name" id="custom-name" placeholder="my-script (tanpa .sh)" class="full"></md-outlined-text-field>
+      <md-outlined-text-field label="Script name" id="custom-name" placeholder="my-script (without .sh)" class="full"></md-outlined-text-field>
       <md-outlined-text-field label="Script content" id="custom-args" type="textarea" rows="4" placeholder="#!/system/bin/sh&#10;echo test > /sdcard/log.txt" class="full" style="margin-top:12px"></md-outlined-text-field>
       <div class="form-actions">
-        <md-filled-button onclick="addCustom()">Create script</md-filled-button>
+        <md-filled-button onclick="addCustom()" class="full-btn">Create script</md-filled-button>
       </div>
     </div>
   </section>
@@ -67,8 +65,10 @@
     <div class="form-card">
       <md-outlined-text-field label="config.txt" id="config-text" type="textarea" rows="14" placeholder="Loading config..." readonly class="full"></md-outlined-text-field>
       <div class="form-actions">
-        <md-outlined-button onclick="loadConfigFile()">Reload</md-outlined-button>
-        <md-filled-button onclick="saveConfigFile()">Save &amp; apply</md-filled-button>
+        <md-icon-button onclick="loadConfigFile()" aria-label="Reload config" title="Reload config">
+          <md-icon>refresh</md-icon>
+        </md-icon-button>
+        <md-filled-button onclick="saveConfigFile()">Apply</md-filled-button>
       </div>
     </div>
   </section>

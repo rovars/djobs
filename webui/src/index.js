@@ -116,7 +116,7 @@ function render(list) {
   const el = $('schedule-list');
   $('job-count').textContent = list.length.toString();
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⏰</div><p>No scheduled jobs yet</p><span>Add one below</span></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon material-symbols-outlined">alarm</div><p>No scheduled jobs yet</p><span>Add one below</span></div>';
     return;
   }
   el.innerHTML = list.map((s, idx) => {
@@ -258,11 +258,6 @@ async function addCustom() {
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
-async function restart() {
-  try { await run('sh ' + esc(UPD)); toastMsg('Restarted'); }
-  catch (e) { toastMsg('Error: ' + e.message); }
-}
-
 async function loadConfigFile() {
   const el = $('config-text');
   try {
@@ -309,7 +304,6 @@ function switchTab(tab) {
 }
 
 window.switchTab = switchTab;
-window.restart = restart;
 window.add = add;
 window.addCustom = addCustom;
 window.toggle = toggle;
