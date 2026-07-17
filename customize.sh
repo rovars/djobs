@@ -20,10 +20,6 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
 EOF
 fi
 
-set_perm_recursive "$MODPATH/jobs" 0 0 0755 0755
-set_perm "$MODPATH/update-cron.sh" 0 0 0755
-set_perm "$MODPATH/busybox.sh" 0 0 0644
-
 # Startup via service.d (lebih tahan Doze)
 SERVICE_D=/data/adb/service.d
 mkdir -p "$SERVICE_D"
