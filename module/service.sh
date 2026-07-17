@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/sh
 # DailyJobs service script — runs automatically at boot.
 # Generates initial crontab; crond lifecycle managed by init via initrc/crond.rc.
 

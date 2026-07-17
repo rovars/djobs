@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/sh
 # run-crond.sh — daemon wrapper for KernelSU initrc service.
 # Called by init via initrc/crond.rc at boot_completed.
 # Builds crontab then exec's crond -f so init tracks its PID directly.
