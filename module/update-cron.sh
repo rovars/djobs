@@ -11,6 +11,8 @@
 #   - service.sh         once at boot (generates initial crontab)
 #   - WebUI              on every add/edit/toggle/delete of a schedule entry
 
+export PATH="/data/adb/magisk:/data/adb/ksu/bin:/data/adb/ap/bin:/system/bin:/system/xbin:$PATH"
+
 MODDIR=${0%/*}
 CONFIG=/data/adb/dailyjobs/config.txt
 CRON_DIR=/data/adb/dailyjobs/crontabs
@@ -19,20 +21,19 @@ CRON_FILE_TMP=$CRON_DIR/.root.tmp
 LOG_FILE=/data/adb/dailyjobs/cron.log
 JOBS_DIR=$MODDIR/jobs
 CUSTOM_DIR=/data/adb/dailyjobs/custom
-BB=busybox
 
 mkdir -p "$CRON_DIR" "$CUSTOM_DIR"
 
 # Rotate log if > 500 KB
 if [ -f "$LOG_FILE" ]; then
-  size=$($BB stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
+  size=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
   [ "$size" -gt 512000 ] && : > "$LOG_FILE"
 fi
 
-# Sanity check
-if ! $BB crond -h >/dev/null 2>&1 && [ "$($BB 2>&1 | grep -c crond)" = "0" ]; then
-  echo "$(date) ERROR: busybox ($BB) has no crond applet" >> "$LOG_FILE"
-  exit 1
+# Sanity check — if no crond, log and exit (service.sh already has PATH)
+if ! busybox crond -h >/dev/null 2>&1; then
+  echo "$(date) dailyjobs: busybox crond not found, aborting" >> "$LOG_FILE"
+  exit 0
 fi
 
 # ============================================================
@@ -50,7 +51,7 @@ find_script() {
 
 : > "$CRON_FILE_TMP"
 
-$BB grep -v '^#' "$CONFIG" 2>/dev/null | $BB grep -v '^[[:space:]]*$' | while read -r time action rest; do
+busybox grep -v '^#' "$CONFIG" 2>/dev/null | busybox grep -v '^[[:space:]]*$' | while read -r time action rest; do
   [ -z "$time" ] && continue
   case "$time" in [0-2][0-9]:[0-5][0-9]) ;; *) continue ;; esac
   h=${time%%:*}; m=${time##*:}
@@ -81,7 +82,7 @@ chmod 644 "$CRON_FILE"
 # ============================================================
 
 # First try SIGHUP (reload crontab without restarting)
-CROND_PIDS=$($BB pgrep -f "busybox crond.*dailyjobs" 2>/dev/null)
+CROND_PIDS=$(busybox pgrep -f "busybox crond.*dailyjobs" 2>/dev/null)
 if [ -n "$CROND_PIDS" ]; then
   # Busybox crond re-reads crontabs on SIGHUP
   # shellcheck disable=SC2086
@@ -99,7 +100,7 @@ if [ -f "$MODDIR/initrc/crond.rc" ]; then
   # KernelSU initrc is present — init should restart crond via critical flag.
   # Wait a moment for init to react, then check.
   sleep 2
-  CROND_PIDS=$($BB pgrep -f "busybox crond.*dailyjobs" 2>/dev/null)
+  CROND_PIDS=$(busybox pgrep -f "busybox crond.*dailyjobs" 2>/dev/null)
   if [ -n "$CROND_PIDS" ]; then
     echo "$(date) crontab rebuilt, crond restarted by init (PID $CROND_PIDS)" >> "$LOG_FILE"
     exit 0
@@ -108,7 +109,7 @@ fi
 
 # Fallback (Magisk / APatch / late-load mode): start crond ourselves.
 # Use setsid + nohup to isolate from shell lifetime.
-nohup $BB crond -c "$CRON_DIR" >/dev/null 2>&1 &
+nohup busybox crond -c "$CRON_DIR" >/dev/null 2>&1 &
 CROND_PID=$!
 sleep 1
 echo -1000 > /proc/$CROND_PID/oom_score_adj 2>/dev/null

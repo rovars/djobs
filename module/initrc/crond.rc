@@ -27,7 +27,6 @@ service dailyjobs-crond /data/adb/modules/dailyjobs/run-crond.sh
     disabled
     seclabel u:r:ksu:s0
     oom_score_adj -1000
-    critical
 
 on property:sys.boot_completed=1
     start dailyjobs-crond
