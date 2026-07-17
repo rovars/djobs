@@ -34,7 +34,8 @@ $busybox grep -v '^#' "$CONFIG" 2>/dev/null | $busybox grep -v '^[[:space:]]*$' 
 
   case "$action" in
     data|airplane)
-      script="$JOBS_DIR/${action}_${rest}.sh"
+      script=$(find_script "${action}_${rest}.sh")
+      [ -z "$script" ] && script="$JOBS_DIR/${action}_${rest}.sh"
       ;;
     *)
       # Try action_rest.sh then action.sh
