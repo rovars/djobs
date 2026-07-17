@@ -21,7 +21,6 @@ EOF
 fi
 
 set_perm_recursive "$MODPATH/jobs" 0 0 0755 0755
-set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/update-cron.sh" 0 0 0755
 set_perm "$MODPATH/busybox.sh" 0 0 0644
 
