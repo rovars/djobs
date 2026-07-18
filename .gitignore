@@ -1,9 +1,13 @@
 native/zig*
 native/ELFkickers*
+native/**/target/
+native/djobs_cli
 native/scheduler
 native/scheduler_arm
 native/scheduler_arm64
 native/wakeup_inspector*
+native/djobs/Cargo.lock
+native/djobsd/Cargo.lock
 zig-x86_64-linux-0.14.1/
 ELFkickers-3.2/
 *.zip
