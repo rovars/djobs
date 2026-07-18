@@ -2,7 +2,7 @@
    render — timeline DOM rendering & swipe-to-delete
    ========================================================== */
 import { $ } from './utils.js';
-import { badgeColor, label } from './theme.js';
+import { label } from './theme.js';
 
 const touchCtx = { el: null, startX: 0, currentX: 0, swiped: false };
 
@@ -54,13 +54,11 @@ export function render(list) {
   }
 
   el.innerHTML = list.map((s, idx) => {
-    const c = badgeColor(idx);
     const typeBadge = s.isCron ? '<span class="cron-badge">CRON</span>' : '';
     return '<div class="swipe-container">' +
       '<div class="swipe-bg">Delete</div>' +
       '<div class="swipe-content" data-idx="' + idx + '">' +
         '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '">' +
-          '<div class="timeline-dot ' + c + '"></div>' +
           '<div class="timeline-body" onclick="openEdit(' + idx + ')">' +
             '<span class="timeline-time">' + s.time + typeBadge + '</span>' +
             '<span class="timeline-label">' + label(s) + '</span>' +

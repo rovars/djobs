@@ -120,34 +120,6 @@ md-tabs {
 }
 
 /* Dot gutter */
-.timeline-dot {
-  width: 52px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.timeline-dot::after {
-  content: '';
-  display: block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid var(--bg);
-  flex-shrink: 0;
-}
-/* Semantic dot colours */
-.timeline-dot.amber::after { background: var(--amber); }
-.timeline-dot.cyan::after { background: var(--cyan); }
-.timeline-dot.violet::after { background: var(--violet); }
-.timeline-dot.pink::after { background: var(--pink); }
-.timeline-dot.lime::after { background: var(--lime); }
-.timeline-dot.orange::after { background: var(--orange); }
-.timeline-dot.rose::after { background: var(--rose); }
-.timeline-dot.sky::after { background: var(--sky); }
-
 /* Body — time + label */
 .timeline-body {
   flex: 1;
