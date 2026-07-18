@@ -79,10 +79,9 @@ cp "$MODPATH/djobs.sh" /data/adb/dailyjobs/djobs.sh
 chmod 755 /data/adb/dailyjobs/djobs.sh
 ui_print "- Installed control script"
 
-# Boot service
-cp "$MODPATH/service.sh" "$SERVICE_DIR/dailyjobs.sh"
-chmod 755 "$SERVICE_DIR/dailyjobs.sh"
-ui_print "- Installed boot service"
+# Boot service — MODULE/service.sh runs automatically at late_start
+# No need to copy to service.d (that would duplicate execution)
+ui_print "- Boot service: module/service.sh (auto)"
 
 # Symlink for module manager
 rm -rf "$MODPATH/dailyjobs"
