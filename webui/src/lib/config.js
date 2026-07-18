@@ -45,4 +45,6 @@ export async function writeConfigFile(entries) {
   const content = serializeConfig(entries);
   const b64 = utf8ToBase64(content);
   await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
+  // SIGHUP scheduler daemon to reload config without restart
+  await run("kill -HUP $(cat /data/adb/dailyjobs/scheduler.pid) 2>/dev/null || true");
 }
