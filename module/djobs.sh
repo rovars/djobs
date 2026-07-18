@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# DailyJobs v3.0 — control script
+# DailyJobs v3.1 — control script
 # Manages the scheduler daemon (start/stop/restart/status)
 
 export PATH="/data/adb/ksu/bin:$PATH"
@@ -7,6 +7,20 @@ export PATH="/data/adb/ksu/bin:$PATH"
 SCHEDULER=/data/adb/dailyjobs/scheduler
 PID_FILE=/data/adb/dailyjobs/scheduler.pid
 LOG_FILE=/data/adb/dailyjobs/run.log
+
+# Auto-detect module.prop path (KSU / APatch / Magisk)
+MODULE_PROP=""
+for d in /data/adb/ksu/modules/dailyjobs/module.prop \
+          /data/adb/ap/modules/dailyjobs/module.prop \
+          /data/adb/modules/dailyjobs/module.prop; do
+  [ -f "$d" ] && MODULE_PROP="$d" && break
+done
+
+update_status() {
+  local label="$1"  # e.g. "✅ Running" or "⏹ Stopped"
+  [ -n "$MODULE_PROP" ] || return
+  sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ $label ] /g" "$MODULE_PROP" 2>/dev/null
+}
 
 is_running() {
   [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null
@@ -20,7 +34,12 @@ case "${1:-status}" in
       echo "[DailyJobs] Starting scheduler..."
       $SCHEDULER
       sleep 1
-      is_running && echo "[DailyJobs] Started OK" || echo "[DailyJobs] Start failed"
+      if is_running; then
+        echo "[DailyJobs] Started OK"
+        update_status "✅ Running"
+      else
+        echo "[DailyJobs] Start failed"
+      fi
     else
       echo "[DailyJobs] Binary not found: $SCHEDULER"
       exit 1
@@ -31,6 +50,7 @@ case "${1:-status}" in
       PID=$(cat "$PID_FILE")
       kill "$PID" 2>/dev/null && echo "[DailyJobs] Stopped PID $PID" || echo "[DailyJobs] No process $PID"
       rm -f "$PID_FILE"
+      update_status "⏹ Stopped"
     else
       echo "[DailyJobs] Not running (no PID file)"
     fi
