@@ -67,7 +67,6 @@ export function render(list) {
           '</div>' +
           '<div class="timeline-actions">' +
             '<md-switch' + (s.disabled ? '' : ' selected') + ' onclick="event.stopPropagation()" onchange="toggle(' + idx + ', this)"></md-switch>' +
-            '<span class="del-btn material-symbols-outlined" onclick="event.stopPropagation();openDelete(' + idx + ')">close</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
