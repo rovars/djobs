@@ -67,7 +67,7 @@ jobs:
       run: |
         cd module
         rm -f ../${{ env.ZIP_NAME }}.zip
-        zip -r9 ../${{ env.ZIP_NAME }}.zip . -x ".*" -x "*.sh" -x "config.txt"
+        zip -r9 ../${{ env.ZIP_NAME }}.zip . -x ".*" -x "djobs.sh" -x "config.txt"
         cd ..
         mv module ${{ env.MODULE_NAME }}-module
         mkdir -p release
