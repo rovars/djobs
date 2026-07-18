@@ -43,9 +43,11 @@ jobs:
         cd native
         chmod +x build.sh
         ./build.sh all
-        # Copy both binaries to module/
-        cp scheduler_arm64 ../module/scheduler_arm64
-        cp scheduler_arm   ../module/scheduler_arm
+        mkdir -p ../module/bin
+        cp scheduler_arm64 ../module/bin/scheduler_arm64
+        cp scheduler_arm   ../module/bin/scheduler_arm
+        cp wakeup_inspector_arm64 ../module/bin/wakeup_inspector_arm64
+        cp wakeup_inspector_arm   ../module/bin/wakeup_inspector_arm
         # Remove native binaries from module packaging
         rm -f ../module/scheduler 2>/dev/null || true
 
@@ -63,9 +65,16 @@ jobs:
         COMMIT_ID=$(git rev-parse --short HEAD)
         echo "ZIP_NAME=${{ env.MODULE_NAME }}_${VERSION}-${VERSIONCODE}-${COMMIT_ID}" >> $GITHUB_ENV
 
-    - name: Upload artifact
+    - name: Upload binary artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ env.ZIP_NAME }}
+        name: binaries-${{ env.ZIP_NAME }}
+        path: module/bin/
+        if-no-files-found: error
+
+    - name: Upload module artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: module-${{ env.ZIP_NAME }}
         path: module/
         if-no-files-found: error
