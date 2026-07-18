@@ -377,14 +377,19 @@ static void execute_due_tasks(time_t now) {
                 executed++;
             }
         }
-        log_message("Executed %d task(s)", executed);
+        if (executed > 0)
+            log_message("Executed %d task(s)", executed);
         return;
     }
 
-    /* Iterasi setiap menit dari last_task_check ke now.
-     * Ini ngecover task yang terlewat (#3). */
-    time_t check = last_task_check - (last_task_check % 60);  /* rounded to minute */
-    time_t end = now - (now % 60) + 60; /* inclusive */
+    /* Iterasi dari 1 menit SETELAH last_task_check sampe menit ini.
+     * - (last_task_check / 60 + 1) * 60 = menit depan setelah last_check
+     * - now - (now % 60) = rounding ke menit saat ini
+     * Ini mencegah duplikasi: tiap menit cuma dieksekusi 1x. */
+    time_t check = (last_task_check / 60 + 1) * 60;
+    time_t end   = now - (now % 60);  /* current minute boundary */
+
+    if (check > end) return;  /* nothing new to check */
 
     while (check <= end) {
         struct tm *tm = localtime(&check);
