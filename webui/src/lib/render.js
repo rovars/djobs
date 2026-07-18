@@ -1,8 +1,8 @@
 /* ==========================================================
-   render — timeline DOM rendering (tap to edit, delete in dialog)
+   render — timeline DOM rendering (tap to edit, toggle, delete)
+   Uses stable entry IDs, no index-based onclick.
    ========================================================== */
 import { $ } from './utils.js';
-import { label } from './theme.js';
 
 export function render(list) {
   const el = $('schedule-list');
@@ -18,16 +18,34 @@ export function render(list) {
     return;
   }
 
-  el.innerHTML = list.map((s, idx) => {
+  el.innerHTML = list.map((s) => {
     const typeBadge = s.isCron ? '<span class="cron-badge">CRON</span>' : '';
-    return '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '">' +
-        '<div class="timeline-body" onclick="openEdit(' + idx + ')">' +
-          '<span class="timeline-time">' + s.time + typeBadge + '</span>' +
-          '<span class="timeline-label">' + label(s) + '</span>' +
+    const timeHtml = escHtml(s.time);
+    const cmdHtml  = escHtml(s.cmd);
+    return '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '" data-id="' + s.id + '">' +
+        '<div class="timeline-body">' +
+          '<span class="timeline-time">' + timeHtml + typeBadge + '</span>' +
+          '<span class="timeline-label"><span class="tl-type">›</span> ' + cmdHtml + '</span>' +
         '</div>' +
         '<div class="timeline-actions">' +
-          '<md-switch' + (s.disabled ? '' : ' selected') + ' onclick="event.stopPropagation()" onchange="toggle(' + idx + ', this)"></md-switch>' +
+          '<md-switch' + (s.disabled ? '' : ' selected') + '></md-switch>' +
         '</div>' +
       '</div>';
   }).join('');
+
+  // Attach event listeners via delegates (not inline onclick)
+  const rows = el.querySelectorAll('.timeline-row');
+  rows.forEach(row => {
+    const id = Number(row.dataset.id);
+    const body = row.querySelector('.timeline-body');
+    const sw = row.querySelector('md-switch');
+
+    body.addEventListener('click', () => window.openEdit(id));
+    sw.addEventListener('click', e => e.stopPropagation());
+    sw.addEventListener('change', () => window.toggle(id, sw));
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

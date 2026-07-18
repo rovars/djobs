@@ -19,13 +19,13 @@ export function parseConfig(text) {
     // Try HH:MM format
     let m = cl.match(/^(\d{2}:\d{2})\s+(.+)$/);
     if (m) {
-      out.push({ line: i, time: m[1], cmd: m[2], disabled: off, isCron: false });
+      out.push({ time: m[1], cmd: m[2], disabled: off, isCron: false });
       continue;
     }
     // Try cron format: 5 cron-like tokens then command
     m = cl.match(/^([\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+)\s+(.+)$/);
     if (m) {
-      out.push({ line: i, time: m[1], cmd: m[2], disabled: off, isCron: true });
+      out.push({ time: m[1], cmd: m[2], disabled: off, isCron: true });
       continue;
     }
   }
@@ -44,7 +44,8 @@ export function serializeConfig(entries) {
 export async function writeConfigFile(entries) {
   const content = serializeConfig(entries);
   const b64 = utf8ToBase64(content);
-  await run("printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG));
-  // SIGHUP scheduler daemon to reload config without restart
-  await run("kill -HUP $(cat /data/adb/dailyjobs/scheduler.pid) 2>/dev/null || true");
+  const write = "printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG);
+  await run(write);
+  // SIGHUP scheduler daemon to reload config (ignore if stopped)
+  await run("kill -HUP $(cat /data/adb/dailyjobs/scheduler.pid 2>/dev/null) 2>/dev/null || true");
 }

@@ -1,6 +1,6 @@
 /* ===================================================
    DailyJobs — redesigned UI
-   Gold accent · dot-based timeline · DM Sans + Inter
+   Gold accent · Material 3
    =================================================== */
 
 /* ---- Reset & Base ---- */
@@ -11,21 +11,11 @@ html, body { background: var(--bg); margin: 0; padding: 0; }
   --bg: #0b0e17;
   --card: #131827;
   --card-border: #1e2640;
-  --card-hover: #181f35;
   --text: #e2e8f0;
   --muted: #718096;
   --accent: #eab308;
   --accent-soft: rgba(234, 179, 8, 0.1);
-  --amber: #f59e0b;
-  --cyan: #22d3ee;
-  --violet: #a78bfa;
-  --pink: #f472b6;
-  --lime: #84cc16;
-  --orange: #fb923c;
-  --rose: #fb7185;
-  --sky: #38bdf8;
   --radius: 14px;
-  --radius-sm: 10px;
   --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -63,22 +53,6 @@ body {
   font-size: 12px !important;
   color: var(--muted) !important;
   margin-top: 1px;
-}
-
-/* ---- Tabs ---- */
-md-tabs {
-  background: var(--bg);
-  margin-bottom: 16px;
-  --md-sys-color-primary: var(--accent);
-  --md-sys-color-on-surface: var(--text);
-  --md-sys-color-on-surface-variant: var(--muted);
-  --md-sys-color-surface: var(--bg);
-  --md-sys-color-secondary-container: var(--accent-soft);
-  --md-tabs-container-color: transparent;
-  --md-primary-tab-active-indicator-color: var(--accent);
-  --md-primary-tab-active-label-text-color: var(--accent);
-  --md-primary-tab-inactive-label-text-color: var(--muted);
-  --md-secondary-tab-active-label-text-color: var(--accent);
 }
 
 /* ---- Section Headers ---- */
@@ -119,8 +93,6 @@ md-tabs {
   opacity: .35;
 }
 
-/* Dot gutter */
-/* Body — time + label */
 .timeline-body {
   flex: 1;
   display: flex;
@@ -136,7 +108,6 @@ md-tabs {
   font-weight: 600;
   color: #fff;
   letter-spacing: -.3px;
-  min-width: 0;
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
@@ -167,21 +138,6 @@ md-tabs {
   margin-left: 6px;
   vertical-align: middle;
   text-transform: uppercase;
-}
-
-/* Form cron hint */
-.form-cron-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  opacity: 0.7;
-}
-.form-cron-hint code {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  background: rgba(255,255,255,0.06);
-  padding: 1px 5px;
-  border-radius: 3px;
 }
 
 /* Actions column (switch) */
@@ -222,15 +178,6 @@ md-tabs {
   border-radius: var(--radius);
   padding: 20px;
 }
-.form-row {
-  display: flex;
-  gap: 12px;
-}
-.form-row + .form-row,
-.form-row + .form-card__full {
-  margin-top: 12px;
-}
-.grow { flex: 1; min-width: 0; }
 .full { width: 100%; }
 .form-actions {
   display: flex;
@@ -249,32 +196,18 @@ md-filled-button {
   --md-filled-button-label-text-color: #1e293b;
   --md-sys-color-primary: var(--accent);
 }
-md-filled-button.full-btn {
-  width: 100%;
-}
-md-filled-button.full-btn::part(button) {
-  width: 100%;
-  justify-content: center;
-}
 md-outlined-button {
   white-space: normal;
   --md-outlined-button-outline-color: var(--card-border);
   --md-outlined-button-label-text-color: var(--text);
 }
-md-icon-button {
-  --md-icon-button-icon-color: var(--muted);
-}
-md-icon-button:hover {
-  --md-icon-button-icon-color: var(--text);
-}
 
-/* ---- Switch (toggle) ---- */
+/* ---- Switch ---- */
 md-switch {
   --md-switch-selected-track-color: #2dd4bf;
   --md-switch-selected-handle-color: #fff;
   --md-switch-unselected-track-color: rgba(255, 255, 255, 0.08);
   --md-switch-unselected-handle-color: var(--muted);
-  --md-switch-pressed-handle-color: var(--muted);
   --md-switch-disabled-selected-track-color: rgba(45, 212, 191, .3);
   --md-switch-disabled-unselected-track-color: rgba(255, 255, 255, 0.04);
 }
@@ -289,11 +222,6 @@ md-outlined-text-field {
   --md-sys-color-primary: var(--accent);
   --md-sys-color-on-surface: var(--text);
   --md-sys-color-on-surface-variant: var(--text);
-}
-md-menu {
-  --md-menu-container-color: var(--card);
-  --md-menu-item-label-text-color: var(--text);
-  --md-menu-item-supporting-text-color: var(--muted);
 }
 
 /* ---- Dialogs ---- */
@@ -311,6 +239,7 @@ md-dialog {
   font-size: 14px;
   line-height: 1.5;
 }
+
 /* ---- Material Icons ---- */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -340,16 +269,14 @@ md-dialog {
   font-family: var(--font-body);
   font-size: 13px;
   z-index: 999;
-  transition: opacity .25s ease, transform .25s ease;
+  transition: opacity .25s ease;
   opacity: 0;
   pointer-events: none;
   box-shadow: 0 8px 28px rgba(0, 0, 0, .45);
   max-width: 90%;
   text-align: center;
 }
-.toast.show {
-  opacity: 1;
-}
+.toast.show { opacity: 1; }
 
 /* ==================================================
    Light mode
@@ -359,22 +286,17 @@ md-dialog {
     --bg: #f1f5f9;
     --card: #ffffff;
     --card-border: #e2e8f0;
-    --card-hover: #f8fafc;
     --text: #1e293b;
     --muted: #64748b;
     --accent: #ca8a04;
     --accent-soft: rgba(202, 138, 4, 0.08);
   }
   .app-title,
-  .timeline-time {
-    color: #0f172a;
-  }
+  .timeline-time { color: #0f172a; }
   .timeline-row + .timeline-row .timeline-body {
     border-top-color: rgba(0, 0, 0, 0.06);
   }
-  .toast {
-    background: #334155;
-  }
+  .toast { background: #334155; }
   md-switch {
     --md-switch-unselected-track-color: rgba(0, 0, 0, 0.08);
     --md-switch-unselected-handle-color: var(--muted);
