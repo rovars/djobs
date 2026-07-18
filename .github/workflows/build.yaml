@@ -25,29 +25,21 @@ jobs:
         cache: 'npm'
         cache-dependency-path: webui/package-lock.json
 
-    - name: Setup Zig
+    - name: Setup Rust + cargo-ndk
       run: |
-        wget -q https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
-        tar -xf zig-x86_64-linux-0.14.1.tar.xz
-        echo "$PWD/zig-x86_64-linux-0.14.1" >> $GITHUB_PATH
+        rustup target add aarch64-linux-android armv7-linux-androideabi
+        cargo install cargo-ndk
 
-    - name: Setup ELFkickers (sstrip)
-      run: |
-        wget -q https://www.muppetlabs.com/~breadbox/pub/software/ELFkickers-3.2.tar.gz
-        tar -xzf ELFkickers-3.2.tar.gz
-        make -C ELFkickers-3.2
-        echo "$PWD/ELFkickers-3.2/bin" >> $GITHUB_PATH
-
-    - name: Build C (ARM + ARM64)
+    - name: Build Rust binaries
       run: |
         cd native
         chmod +x build.sh
         ./build.sh all
         mkdir -p ../module/bin
         cp scheduler_arm64 ../module/bin/scheduler_arm64
-        cp scheduler_arm   ../module/bin/scheduler_arm
-        # Remove native binaries from module packaging
-        rm -f ../module/scheduler 2>/dev/null || true
+        cp scheduler_arm ../module/bin/scheduler_arm
+        cp djobs_arm64 ../module/bin/djobs_arm64
+        cp djobs_arm ../module/bin/djobs_arm
 
     - name: Build webui
       run: |
