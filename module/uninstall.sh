@@ -25,19 +25,5 @@ rm -f "$SERVICE_SCRIPT"
 # Remove scheduler binary
 rm -f "$SCHEDULER"
 
-# Ask about config+logs (silently skip if non-interactive)
-if [ -t 0 ]; then
-  echo ""
-  echo "  Remove config.txt and run.log? (y/N)"
-  read -r ans
-  case "$ans" in
-    y|Y|yes|YES)
-      rm -rf "$DATA_DIR"
-      echo "  Removed: $DATA_DIR"
-      ;;
-    *)
-      echo "  Preserved: $DATA_DIR/config.txt"
-      echo "  Preserved: $DATA_DIR/run.log"
-      ;;
-  esac
-fi
+# Remove all runtime data (config, logs, everything)
+rm -rf "$DATA_DIR"
