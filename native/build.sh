@@ -12,15 +12,15 @@ build_android() {
     local target="$2"
     local outname="$3"
     echo "[build] $crate for $target..."
-    cd "$crate" && $CARGO build --target "$target" --release && cd ..
+    (cd "$crate" && $CARGO build --target "$target" --release) || return 1
     cp "$crate/target/$target/release/$crate" "$outname"
 }
 
 build_native() {
     echo "[build] x86_64 (native)..."
-    cd djobsd && $CARGO build --release && cd ..
+    (cd djobsd && $CARGO build --release) || return 1
     cp djobsd/target/release/djobsd scheduler
-    cd djobs && $CARGO build --release && cd ..
+    (cd djobs && $CARGO build --release) || return 1
     cp djobs/target/release/djobs djobs_cli
 }
 

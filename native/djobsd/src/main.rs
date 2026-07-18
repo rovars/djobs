@@ -153,8 +153,7 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
     let tfd = unsafe {
         libc::timerfd_create(libc::CLOCK_REALTIME_ALARM, libc::TFD_NONBLOCK | libc::TFD_CLOEXEC)
     };
-    let use_alarm = tfd >= 0;
-    if !use_alarm {
+    if tfd < 0 {
         log::warn!("CLOCK_REALTIME_ALARM unavailable, fallback CLOCK_REALTIME");
     }
     let tfd = if tfd >= 0 {
@@ -169,7 +168,7 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
 
     let mut spec: libc::itimerspec = unsafe { std::mem::zeroed() };
     spec.it_value.tv_sec = target_ts as libc::time_t;
-    let flags = if use_alarm { libc::TFD_TIMER_ABSTIME } else { 0 };
+    let flags = libc::TFD_TIMER_ABSTIME;
 
     let ret = unsafe { libc::timerfd_settime(tfd, flags, &spec, std::ptr::null_mut()) };
     if ret < 0 {
