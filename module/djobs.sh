@@ -8,6 +8,7 @@ SCHEDULER=/data/adb/dailyjobs/scheduler
 PID_FILE=/data/adb/dailyjobs/scheduler.pid
 LOG_FILE=/data/adb/dailyjobs/run.log
 WAIT_TIMEOUT=5  # max seconds to wait for graceful stop
+DISABLE_FILE="/data/adb/modules/dailyjobs/disable"
 
 # Auto-detect module.prop path (KSU / APatch / Magisk)
 MODULE_PROP=""

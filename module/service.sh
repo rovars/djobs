@@ -6,6 +6,8 @@ export PATH="/data/adb/ksu/bin:$PATH"
 
 SCHEDULER=/data/adb/dailyjobs/scheduler
 PID_FILE=/data/adb/dailyjobs/scheduler.pid
+MODULE_DIR="/data/adb/modules/dailyjobs"
+DISABLE_FILE="$MODULE_DIR/disable"
 
 # Auto-detect module.prop path
 MODULE_PROP=""
@@ -22,15 +24,18 @@ update_status() {
 }
 
 # Wait for boot with timeout (120s max)
-# sys.boot_completed=1 means Android is fully up,
-# including data decryption. No need to check
-# dev.bootcomplete (OEM-specific) or vold.decrypt.
 waited=0
 while [ "$waited" -lt 12 ] && [ "$(getprop sys.boot_completed)" != "1" ]; do
   sleep 10
   waited=$((waited + 1))
 done
 sleep 30
+
+# Stop if module was disabled (via /data/adb/modules/dailyjobs/disable)
+if [ -f "$DISABLE_FILE" ]; then
+  update_status "⏹ Disabled"
+  exit 0
+fi
 
 # Start scheduler (daemonizes, exits immediately)
 if [ -f "$SCHEDULER" ]; then
