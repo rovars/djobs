@@ -32,11 +32,11 @@ while [ "$waited" -lt 12 ] && [ "$(getprop sys.boot_completed)" != "1" ]; do
 done
 sleep 30
 
-# Start scheduler with crash recovery
-while [ -f "$SCHEDULER" ]; do
+# Start scheduler (daemonizes, exits immediately)
+if [ -f "$SCHEDULER" ]; then
   $SCHEDULER
-  update_status "⚠️ Crashed"
-  sleep 10
-  # Don't restart if module was removed
-  [ -d "/data/adb/dailyjobs" ] || break
-done
+  sleep 2
+  if [ -f "$PID_FILE" ]; then
+    update_status "✅ Running"
+  fi
+fi
