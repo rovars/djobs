@@ -76,6 +76,8 @@ static int task_count = 0;
  * ============================================================ */
 
 static volatile sig_atomic_t running = 1;
+static volatile sig_atomic_t child_count = 0;
+#define MAX_CHILDREN 8
 static int sighup_pipe_write_fd = -1;
 static time_t last_task_check = 0;
 static char *config_path = CRON_ROOT;
@@ -124,6 +126,11 @@ static void signal_handler(int sig) {
         /* Tulis ke pipe biar epoll bangun dan reload config */
         if (sighup_pipe_write_fd >= 0)
             write(sighup_pipe_write_fd, "", 1);
+        return;
+    }
+    if (sig == SIGCHLD) {
+        while (waitpid(-1, NULL, WNOHANG) > 0)
+            __sync_sub_fetch(&child_count, 1);
         return;
     }
     /* SIGINT / SIGTERM */
@@ -339,10 +346,17 @@ static time_t find_next_cron_task(void) {
  * ============================================================ */
 
 static void run_command(const char *cmd) {
+    if (__sync_fetch_and_add(&child_count, 1) >= MAX_CHILDREN) {
+        __sync_sub_fetch(&child_count, 1);
+        log_message("Too many children (%d), skipping: %s", child_count, cmd);
+        return;
+    }
+
     log_message("Exec: %s", cmd);
 
     pid_t pid = fork();
     if (pid < 0) {
+        __sync_sub_fetch(&child_count, 1);
         log_message("Fork failed: %s", strerror(errno));
         return;
     }
@@ -360,7 +374,7 @@ static void run_command(const char *cmd) {
         execl(BUSYBOX_MAGISK, "busybox", "sh", "-c", cmd, (char *)NULL);
         _exit(127);
     }
-    /* Parent: gak perlu waitpid karena SIGCHLD = SIG_IGN (#1) */
+    /* Parent: child already counted above */
 }
 
 static void execute_due_tasks(time_t now) {
@@ -533,8 +547,14 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    /* #1: auto-reap zombie children */
-    signal(SIGCHLD, SIG_IGN);
+    /* #1: reap children and track count */
+    {
+        struct sigaction sa;
+        sa.sa_handler = signal_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+        sigaction(SIGCHLD, &sa, NULL);
+    }
 
     /* SIGHUP → reload config via pipe (fixed #4) */
     signal(SIGINT, signal_handler);
@@ -588,11 +608,13 @@ int main(int argc, char *argv[]) {
         /* Execute overdue tasks right away */
         if (now >= next_ts) {
             execute_due_tasks(now);
+            if (!running) break;
             load_cron_tasks();
             next_ts = find_next_cron_task();
         }
 
         now = time(NULL);
+        if (!running) break;
         if (now >= next_ts) continue;
 
         int tfd = arm_timerfd(epoll_fd, next_ts);
@@ -610,6 +632,12 @@ int main(int argc, char *argv[]) {
         if (nfds < 0) {
             if (errno == EINTR) {
                 log_message("Interrupted by signal");
+                /* Reset to "first-run" sentinel so execute_due_tasks
+                 * only checks the current minute (never past minutes).
+                 * Load fresh config first since config may have changed. */
+                last_task_check = 0;
+                load_cron_tasks();
+                execute_due_tasks(time(NULL));
             } else {
                 log_message("epoll_wait error: %s", strerror(errno));
                 sleep(5);
@@ -624,18 +652,31 @@ int main(int argc, char *argv[]) {
          * timer event must use FRESH config, not the old one. */
         load_cron_tasks();
 
+        bool timer_fired = false;
+        bool sighup_fired = false;
+
         for (int i = 0; i < nfds; i++) {
             if (events[i].data.fd == tfd) {
+                timer_fired = true;
                 uint64_t exp;
                 read(tfd, &exp, sizeof(exp));
                 log_message("Timer fired! %lu expiration(s)", (unsigned long)exp);
                 execute_due_tasks(time(NULL));
-
             } else if (events[i].data.fd == reload_pipe[0]) {
                 char buf[64];
-                read(reload_pipe[0], buf, sizeof(buf));
-                log_message("SIGHUP: reloading config");
+                if (read(reload_pipe[0], buf, sizeof(buf)) > 0) {
+                    sighup_fired = true;
+                    log_message("SIGHUP: reloading config");
+                }
             }
+        }
+
+        /* Only SIGHUP, no timer fire — config changed but current minute
+         * was never checked with the new config. Do it now (first-run
+         * sentinel = check current minute only). */
+        if (sighup_fired && !timer_fired) {
+            last_task_check = 0;
+            execute_due_tasks(time(NULL));
         }
 
         /* Cleanup timerfd */
