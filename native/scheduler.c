@@ -474,11 +474,13 @@ static void remove_pid_file(void) { unlink(PID_FILE); }
 
 static void print_usage(const char *prog) {
     fprintf(stderr,
-        "Usage: %s [options]\n"
+        "Usage: %s [options] [status]\n"
         "Options:\n"
         "  -f, --foreground    Run in foreground (default: daemon)\n"
         "  -c, --config PATH   Cron config file (default: %s)\n"
         "  -p, --poll SEC      Poll interval if no tasks (default: %d)\n"
+        "  -s, --status        Show scheduler status\n"
+        "  status              Same as --status\n"
         "  -h, --help          This help\n",
         prog, CRON_ROOT, DEFAULT_POLL_INTERVAL);
 }
@@ -493,16 +495,37 @@ int main(int argc, char *argv[]) {
     };
 
     bool foreground = false;
+    bool show_status = false;
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "fc:p:h", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "fc:p:hs", long_opts, NULL)) != -1) {
         switch (opt) {
             case 'f': foreground = true; break;
             case 'c': config_path = optarg; break;
             case 'p': poll_interval = atoi(optarg); if (poll_interval < 10) poll_interval = 10; break;
+            case 's': show_status = true; break;
             case 'h': print_usage(argv[0]); return 0;
             default:  print_usage(argv[0]); return 1;
         }
+    }
+
+    /* Handle 'status' as first positional argument for convenience */
+    if (!show_status && optind < argc && strcmp(argv[optind], "status") == 0)
+        show_status = true;
+
+    if (show_status) {
+        FILE *f = fopen(PID_FILE, "r");
+        if (f) {
+            pid_t pid;
+            if (fscanf(f, "%d", &pid) == 1 && kill(pid, 0) == 0) {
+                printf("[scheduler] Running (PID %d)\n", pid);
+                fclose(f);
+                return 0;
+            }
+            fclose(f);
+        }
+        printf("[scheduler] Stopped\n");
+        return 0;
     }
 
     /* #1: auto-reap zombie children */
