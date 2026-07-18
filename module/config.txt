@@ -1,14 +1,24 @@
 # Format: HH:MM shell_command  (simple)  atau  cron_expression command
 #
-# Simple (HH:MM — jalan tiap hari jam tersebut):
-#   22:30 svc data disable
-#   07:00 svc data enable
-#   23:00 cmd connectivity airplane-mode enable
+# Contoh di bawah di-comment (#). Buka WebUI → toggle ON untuk aktifkan.
 #
-# Cron (5 field — lebih fleksibel):
-#   30 22 * * * am start -n com.example/.MainActivity
-#   step/15 9-17 * * 1-5 echo "work hours"
-#   0 9 * * 1,3,5 /bin/sh /sdcard/script.sh
+# ─── Mati/hidupkan data otomatis ───
+# 22:30 svc data disable
+# 07:00 svc data enable
+#
+# ─── Mode pesawat ───
+# 23:00 cmd connectivity airplane-mode enable
+# 06:00 cmd connectivity airplane-mode disable
+#
+# ─── WiFi ───
+# 23:30 svc wifi disable
+# 06:30 svc wifi enable
+#
+# ─── Cron: matikan data setiap 2 jam (lebiih fleksibel) ───
+# 0 */2 * * * svc data disable
+#
+# ─── Cron: start app tiap Senin/Rabu/Jumat jam 9 pagi ───
+# 0 9 * * 1,3,5 am start -n com.example/.MainActivity
 #
 # Awali dengan # untuk nonaktifkan sementara.
 #
