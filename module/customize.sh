@@ -27,24 +27,28 @@ ARCH=$(uname -m)
 case "$ARCH" in
   aarch64|arm64)
     BINARY="scheduler_arm64"
+    INSPECTOR="wakeup_inspector_arm64"
     ui_print "- Architecture: ARM64 (aarch64)"
     ;;
   armv7l|armv8l|armv7*|arm*)
     BINARY="scheduler_arm"
+    INSPECTOR="wakeup_inspector_arm"
     ui_print "- Architecture: ARM32 (armv7)"
     ;;
   x86_64|amd64)
     BINARY="scheduler_arm64"
+    INSPECTOR="wakeup_inspector_arm64"
     ui_print "- Architecture: x86_64 (fallback to ARM64)"
     ;;
   *)
     ui_print "- Unknown arch: $ARCH, trying ARM64"
     BINARY="scheduler_arm64"
+    INSPECTOR="wakeup_inspector_arm64"
     ;;
 esac
 
 # ---- Install ----
-mkdir -p /data/adb/dailyjobs "$SERVICE_DIR"
+mkdir -p /data/adb/dailyjobs/bin "$SERVICE_DIR"
 
 # Default config
 if [ ! -f /data/adb/dailyjobs/config.txt ]; then
@@ -52,20 +56,20 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
   ui_print "- Created default config"
 fi
 
-# Deploy correct architecture binary
+# Deploy correct architecture binaries
 if [ -f "$MODPATH/bin/$BINARY" ]; then
-  mkdir -p /data/adb/dailyjobs/bin
-  cp "$MODPATH/bin/scheduler_arm64" /data/adb/dailyjobs/bin/scheduler_arm64 2>/dev/null
-  cp "$MODPATH/bin/scheduler_arm" /data/adb/dailyjobs/bin/scheduler_arm 2>/dev/null
   cp "$MODPATH/bin/$BINARY" /data/adb/dailyjobs/scheduler
   chmod 755 /data/adb/dailyjobs/scheduler
-  # Deploy wakeup_inspector
-  cp "$MODPATH/bin/wakeup_inspector_arm64" /data/adb/dailyjobs/bin/wakeup_inspector_arm64 2>/dev/null
-  cp "$MODPATH/bin/wakeup_inspector_arm" /data/adb/dailyjobs/bin/wakeup_inspector_arm 2>/dev/null
   ui_print "- Deployed $BINARY"
 else
-  ui_print "! Binary not found: bin/$BINARY"
+  ui_print "! Scheduler binary not found: bin/$BINARY"
   abort "Architecture not supported"
+fi
+
+if [ -f "$MODPATH/bin/$INSPECTOR" ]; then
+  cp "$MODPATH/bin/$INSPECTOR" /data/adb/dailyjobs/bin/wakeup_inspector
+  chmod 755 /data/adb/dailyjobs/bin/wakeup_inspector
+  ui_print "- Deployed $INSPECTOR"
 fi
 
 # Control script
