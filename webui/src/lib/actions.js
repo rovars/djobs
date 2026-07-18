@@ -4,7 +4,7 @@
    ========================================================== */
 import { $, toastMsg } from './utils.js';
 import { writeConfigFile } from './config.js';
-import { getEntries, pushEntry, removeEntry, updateEntry } from './state.js';
+import { getEntries, pushEntry, removeEntry, updateEntry, findEntry } from './state.js';
 import { render } from './render.js';
 
 /* Validate time/cron format (matches C parser) */
@@ -51,10 +51,11 @@ export async function doAddFromDialog() {
 /* ---- Toggle enable/disable (by stable ID) ---- */
 export async function toggle(id, sw) {
   try {
-    const e = updateEntry(id, { disabled: !sw.selected });
-    if (!e) return toastMsg('Entry not found');
+    const entry = findEntry(id);
+    if (!entry) return toastMsg('Entry not found');
+    updateEntry(id, { disabled: !entry.disabled });
     await writeConfigFile(getEntries());
-    toastMsg(e.disabled ? 'Disabled' : 'Enabled');
+    toastMsg(entry.disabled ? 'Enabled' : 'Disabled');
     render(getEntries());
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
