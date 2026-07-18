@@ -90,7 +90,7 @@ fn execute_due_tasks(
 
     if *last_check == 0 {
         *last_check = now;
-        let mut t = now as libc::time_t;
+        let t = now as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
         unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
         for task in tasks {
@@ -120,7 +120,7 @@ fn execute_due_tasks(
     }
 
     while check <= end {
-        let mut t = check as libc::time_t;
+        let t = check as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
         unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
         for task in tasks {
