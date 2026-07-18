@@ -45,7 +45,9 @@
 #define CRON_ROOT       "/data/adb/dailyjobs/config.txt"
 #define RUN_LOG         "/data/adb/dailyjobs/run.log"
 #define PID_FILE        "/data/adb/dailyjobs/scheduler.pid"
-#define BUSYBOX         "/data/adb/ksu/bin/busybox"
+#define BUSYBOX_KSU     "/data/adb/ksu/bin/busybox"
+#define BUSYBOX_AP      "/data/adb/ap/bin/busybox"
+#define BUSYBOX_MAGISK  "/data/adb/magisk/busybox"
 
 #define DEFAULT_POLL_INTERVAL   900  /* 15 menit kalo gak ada task */
 #define MAX_TASKS               256
@@ -351,7 +353,9 @@ static void run_command(const char *cmd) {
             if (fd > 2) close(fd);
         }
         execl("/system/bin/sh", "sh", "-c", cmd, (char *)NULL);
-        execl(BUSYBOX, "busybox", "sh", "-c", cmd, (char *)NULL);
+        execl(BUSYBOX_KSU, "busybox", "sh", "-c", cmd, (char *)NULL);
+        execl(BUSYBOX_AP, "busybox", "sh", "-c", cmd, (char *)NULL);
+        execl(BUSYBOX_MAGISK, "busybox", "sh", "-c", cmd, (char *)NULL);
         _exit(127);
     }
     /* Parent: gak perlu waitpid karena SIGCHLD = SIG_IGN (#1) */
