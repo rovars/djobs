@@ -6,18 +6,16 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const MAX_TASKS: usize = 256;
 
-/// Error type for config parsing
+/// Error type for config loading
 #[derive(Debug)]
 pub enum ConfigError {
     Io(std::io::Error),
-    Parse { line: usize, msg: String },
 }
 
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConfigError::Io(e) => write!(f, "IO error: {e}"),
-            ConfigError::Parse { line, msg } => write!(f, "line {line}: {msg}"),
         }
     }
 }
@@ -158,7 +156,7 @@ pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
 
     let mut probe = after;
     for _days in 0..30 {
-        let mut local_time: libc::time_t = probe as libc::time_t;
+        let local_time: libc::time_t = probe as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
         unsafe {
             libc::localtime_r(&local_time as *const libc::time_t, &mut tm);
