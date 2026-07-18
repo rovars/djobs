@@ -589,7 +589,11 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        /* Handle events */
+        /* Handle events — reload config first to prevent race:
+         * if SIGHUP (toggle off) and timer fire in same epoll cycle,
+         * timer event must use FRESH config, not the old one. */
+        load_cron_tasks();
+
         for (int i = 0; i < nfds; i++) {
             if (events[i].data.fd == tfd) {
                 uint64_t exp;
@@ -598,7 +602,6 @@ int main(int argc, char *argv[]) {
                 execute_due_tasks(time(NULL));
 
             } else if (events[i].data.fd == reload_pipe[0]) {
-                /* SIGHUP — reload config (#4) */
                 char buf[64];
                 read(reload_pipe[0], buf, sizeof(buf));
                 log_message("SIGHUP: reloading config");
