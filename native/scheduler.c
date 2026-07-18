@@ -607,6 +607,20 @@ int main(int argc, char *argv[]) {
     /* --diagnose: run checks, exit */
     if (diagnose) { cmd_diagnose(); return 0; }
 
+    /* Set timezone from system property so localtime() matches user TZ */
+    {
+        FILE *f = popen("/system/bin/getprop persist.sys.timezone 2>/dev/null", "r");
+        if (f) {
+            char tz[64] = {0};
+            if (fgets(tz, sizeof(tz), f) && tz[0]) {
+                tz[strcspn(tz, "\n")] = '\0';
+                setenv("TZ", tz, 1);
+                tzset();
+            }
+            pclose(f);
+        }
+    }
+
     /* #1: reap children and track count */
     {
         struct sigaction sa;
