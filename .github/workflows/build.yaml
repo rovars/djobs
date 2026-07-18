@@ -38,20 +38,22 @@ jobs:
         make -C ELFkickers-3.2
         echo "$PWD/ELFkickers-3.2/bin" >> $GITHUB_PATH
 
-    - name: Build C native + ARM64
+    - name: Build C (ARM + ARM64)
       run: |
         cd native
         chmod +x build.sh
-        ./build.sh arm64
-        # Copy binary to module/
-        cp scheduler_arm64 ../module/scheduler
+        ./build.sh all
+        # Copy both binaries to module/
+        cp scheduler_arm64 ../module/scheduler_arm64
+        cp scheduler_arm   ../module/scheduler_arm
+        # Remove native binaries from module packaging
+        rm -f ../module/scheduler 2>/dev/null || true
 
     - name: Build webui
       run: |
         cd webui
         npm ci
         npm run build
-        # Copy dist to module/
         cp -r dist/* ../module/ 2>/dev/null || true
 
     - name: Set variables
@@ -66,7 +68,6 @@ jobs:
         cd module
         rm -f ../${{ env.ZIP_NAME }}.zip
         zip -r9 ../${{ env.ZIP_NAME }}.zip . -x ".*" -x "*.sh" -x "config.txt"
-        # Full zip with config for releases
         cd ..
         mv module ${{ env.MODULE_NAME }}-module
         mkdir -p release

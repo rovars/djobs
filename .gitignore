@@ -1,8 +1,10 @@
 native/zig*
 native/ELFkickers*
 native/scheduler
+native/scheduler_arm
 native/scheduler_arm64
 native/wakeup_inspector
+native/wakeup_inspector_arm
 native/wakeup_inspector_arm64
 zig-x86_64-linux-0.14.1/
 ELFkickers-3.2/
@@ -10,4 +12,6 @@ ELFkickers-3.2/
 node_modules/
 webui/dist/
 module/scheduler
+module/scheduler_arm
+module/scheduler_arm64
 module/wakeup_inspector*
