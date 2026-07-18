@@ -66,9 +66,7 @@ export function openEdit(idx) {
   const e = getEntries()[idx];
   if (!e) return;
   editIdentity = { time: e.time, cmd: e.cmd };
-  const prefix = e.disabled ? '# ' : '';
-  $('edit-line').value = prefix + e.time + ' ' + e.cmd;
-  $('edit-disabled').selected = !e.disabled;
+  $('edit-line').value = e.time + ' ' + e.cmd;
   $('edit-dialog').show();
 }
 
@@ -97,7 +95,6 @@ export async function saveEditFromDialog() {
     const entries = getEntries();
     entries[idx].time = parsed.time;
     entries[idx].cmd = parsed.cmd;
-    entries[idx].disabled = parsed.disabled;
     entries[idx].isCron = parsed.isCron;
     await writeConfigFile(entries);
     toastMsg('Saved');
