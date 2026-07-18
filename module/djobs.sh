@@ -5,6 +5,7 @@
 PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH
 MODDIR=/data/adb/modules/dailyjobs
 PERSISTENT_DIR=/data/adb/dailyjobs
+export TZ=$(getprop persist.sys.timezone 2>/dev/null)
 
 SCHEDULER=/data/adb/dailyjobs/scheduler
 PID_FILE=/data/adb/dailyjobs/scheduler.pid
