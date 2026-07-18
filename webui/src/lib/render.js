@@ -2,7 +2,7 @@
    render — timeline DOM rendering (tap to edit, toggle, delete)
    Uses stable entry IDs, no index-based onclick.
    ========================================================== */
-import { $ } from './utils.js';
+import { $, escHtml } from './utils.js';
 
 export function render(list) {
   const el = $('schedule-list');
@@ -46,6 +46,4 @@ export function render(list) {
   });
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+

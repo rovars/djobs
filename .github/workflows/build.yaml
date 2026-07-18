@@ -46,8 +46,6 @@ jobs:
         mkdir -p ../module/bin
         cp scheduler_arm64 ../module/bin/scheduler_arm64
         cp scheduler_arm   ../module/bin/scheduler_arm
-        cp wakeup_inspector_arm64 ../module/bin/wakeup_inspector_arm64
-        cp wakeup_inspector_arm   ../module/bin/wakeup_inspector_arm
         # Remove native binaries from module packaging
         rm -f ../module/scheduler 2>/dev/null || true
 

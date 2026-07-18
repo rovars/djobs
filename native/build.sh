@@ -17,26 +17,21 @@ echo "[build] Using: $($ZIG version)"
 build_native() {
     echo "[build] x86_64..."
     $ZIG cc $CFLAGS scheduler.c -o scheduler
-    $ZIG cc $CFLAGS wakeup_inspector.c -o wakeup_inspector
 }
 
 build_arm64() {
     echo "[build] ARM64 (aarch64-linux-musl)..."
     $ZIG cc $CFLAGS -target aarch64-linux-musl -static scheduler.c -o scheduler_arm64
-    $ZIG cc $CFLAGS -target aarch64-linux-musl -static wakeup_inspector.c -o wakeup_inspector_arm64
     if command -v "$STRIP" &>/dev/null; then
         $STRIP scheduler_arm64 2>/dev/null || true
-        $STRIP wakeup_inspector_arm64 2>/dev/null || true
     fi
 }
 
 build_arm() {
     echo "[build] ARM (arm-linux-musleabihf)..."
     $ZIG cc $CFLAGS -target arm-linux-musleabihf -static scheduler.c -o scheduler_arm
-    $ZIG cc $CFLAGS -target arm-linux-musleabihf -static wakeup_inspector.c -o wakeup_inspector_arm
     if command -v "$STRIP" &>/dev/null; then
         $STRIP scheduler_arm 2>/dev/null || true
-        $STRIP wakeup_inspector_arm 2>/dev/null || true
     fi
 }
 
@@ -49,4 +44,4 @@ case "${1:-arm64}" in
 esac
 
 echo "[build] Done"
-ls -lh scheduler* wakeup_inspector* 2>/dev/null
+ls -lh scheduler* 2>/dev/null

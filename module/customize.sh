@@ -1,25 +1,6 @@
 #!/bin/sh
 # DailyJobs v3.0 installer — KernelSU / Magisk / APatch
 
-# ---- Detect root framework ----
-if [ "$KSU" = "true" ]; then
-  ui_print "- [DailyJobs] KernelSU detected"
-  BUSYBOX="/data/adb/ksu/bin/busybox"
-elif [ "$APATCH" = "true" ]; then
-  ui_print "- [DailyJobs] APatch detected"
-  BUSYBOX="/data/adb/ap/bin/busybox"
-elif [ "$MAGISK_VER_CODE" ] || [ "$MAGISK_VER" ]; then
-  ui_print "- [DailyJobs] Magisk detected"
-  BUSYBOX="/data/adb/magisk/busybox"
-else
-  # Fallback auto-detect
-  for d in ksu ap magisk; do
-    [ -d "/data/adb/$d" ] && BUSYBOX="/data/adb/$d/bin/busybox" && break
-  done
-  : "${BUSYBOX:=/data/adb/magisk/busybox}"
-  ui_print "- [DailyJobs] Auto-detected root"
-fi
-
 SERVICE_DIR="/data/adb/service.d"
 
 # ---- Detect CPU architecture ----
@@ -27,23 +8,19 @@ ARCH=$(uname -m)
 case "$ARCH" in
   aarch64|arm64)
     BINARY="scheduler_arm64"
-    INSPECTOR="wakeup_inspector_arm64"
     ui_print "- Architecture: ARM64 (aarch64)"
     ;;
   armv7l|armv8l|armv7*|arm*)
     BINARY="scheduler_arm"
-    INSPECTOR="wakeup_inspector_arm"
     ui_print "- Architecture: ARM32 (armv7)"
     ;;
   x86_64|amd64)
     BINARY="scheduler_arm64"
-    INSPECTOR="wakeup_inspector_arm64"
     ui_print "- Architecture: x86_64 (fallback to ARM64)"
     ;;
   *)
     ui_print "- Unknown arch: $ARCH, trying ARM64"
     BINARY="scheduler_arm64"
-    INSPECTOR="wakeup_inspector_arm64"
     ;;
 esac
 
@@ -66,12 +43,6 @@ if [ -f "$MODPATH/bin/$BINARY" ]; then
 else
   ui_print "! Scheduler binary not found: bin/$BINARY"
   abort "Architecture not supported"
-fi
-
-if [ -f "$MODPATH/bin/$INSPECTOR" ]; then
-  cp "$MODPATH/bin/$INSPECTOR" /data/adb/dailyjobs/bin/wakeup_inspector
-  chmod 755 /data/adb/dailyjobs/bin/wakeup_inspector
-  ui_print "- Deployed $INSPECTOR"
 fi
 
 # Control script

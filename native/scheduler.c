@@ -38,6 +38,9 @@
 #include <stdarg.h>
 #include <stdatomic.h>
 #include <getopt.h>
+#include <dirent.h>
+#include <sys/ioctl.h>
+#include <linux/rtc.h>
 
 /* ============================================================
  *  Konfigurasi
@@ -310,6 +313,7 @@ static bool cron_matches(CronTask *t, struct tm *tm) {
  * ============================================================ */
 
 static time_t find_next_cron_task(void) {
+    if (task_count == 0) return time(NULL) + poll_interval;
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
 
@@ -478,15 +482,64 @@ static int arm_timerfd(int epoll_fd, time_t target_ts) {
  *  PID File
  * ============================================================ */
 
-static void write_pid_file(void) {
-    FILE *f = fopen(PID_FILE, "w");
+static void remove_pid_file(void) { unlink(PID_FILE); }
+
+/* ============================================================
+ *  Diagnostics (--diagnose / -d)
+ * ============================================================ */
+
+static void cmd_diagnose(void) {
+    printf("[diagnose] PID %d UID %d%s\n", getpid(), getuid(),
+           getuid() == 0 ? " ROOT" : " (not root)");
+
+    int tfd = timerfd_create(CLOCK_REALTIME_ALARM, TFD_CLOEXEC);
+    printf("[diagnose] CLOCK_REALTIME_ALARM: %s\n",
+           tfd >= 0 ? "SUPPORTED" : "UNAVAILABLE");
+    if (tfd >= 0) close(tfd);
+
+    int efd = epoll_create1(EPOLL_CLOEXEC);
+    tfd = timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
+    if (efd >= 0 && tfd >= 0) {
+        struct epoll_event ev = {.events = EPOLLIN, .data.fd = tfd};
+        printf("[diagnose] epoll+timerfd: %s\n",
+               epoll_ctl(efd, EPOLL_CTL_ADD, tfd, &ev) == 0 ? "OK" : "FAIL");
+        close(tfd); close(efd);
+    }
+
+    FILE *f = fopen("/sys/kernel/debug/wakeup_sources", "r");
+    if (!f) f = fopen("/proc/self/wakeup_sources", "r");
     if (f) {
-        fprintf(f, "%d\n", getpid());
+        char line[512], name[64]; int ac, ec, wc, sc; unsigned long since;
+        printf("[diagnose] Wakeup sources:\n");
+        while (fgets(line, sizeof(line), f)) {
+            line[strcspn(line, "\n")] = 0;
+            if (sscanf(line, "%63s %d %d %d %d %lu", name, &ac, &ec, &wc, &sc, &since) >= 6)
+                printf("  %-20s active=%d events=%d wakeups=%d since=%lu\n", name, ac, ec, wc, since);
+        }
         fclose(f);
     }
-}
 
-static void remove_pid_file(void) { unlink(PID_FILE); }
+    DIR *dir = opendir("/dev");
+    if (dir) {
+        struct dirent *e;
+        while ((e = readdir(dir)) != NULL) {
+            if (strncmp(e->d_name, "rtc", 3) != 0) continue;
+            char path[384]; snprintf(path, sizeof(path), "/dev/%s", e->d_name);
+            int fd = open(path, O_RDONLY);
+            if (fd < 0) { printf("[diagnose] RTC %s: %s\n", e->d_name, strerror(errno)); continue; }
+            struct rtc_wkalrm alarm = {.enabled = 1};
+            time_t t = time(NULL) + 60;
+            struct tm *tm = localtime(&t);
+            if (tm) memcpy(&alarm.time, tm, sizeof(struct tm));
+            printf("[diagnose] RTC %s WKALM_SET: %s\n", e->d_name,
+                   ioctl(fd, RTC_WKALM_SET, &alarm) == 0 ? "OK" : "FAIL");
+            alarm.enabled = 0; ioctl(fd, RTC_WKALM_SET, &alarm);
+            close(fd);
+        }
+        closedir(dir);
+    }
+    printf("[diagnose] Done\n");
+}
 
 /* ============================================================
  *  Main Loop
@@ -499,6 +552,7 @@ static void print_usage(const char *prog) {
         "  -f, --foreground    Run in foreground (default: daemon)\n"
         "  -c, --config PATH   Cron config file (default: %s)\n"
         "  -p, --poll SEC      Poll interval if no tasks (default: %d)\n"
+        "  -d, --diagnose      Run hardware diagnostics and exit\n"
         "  -s, --status        Show scheduler status\n"
         "  status              Same as --status\n"
         "  -h, --help          This help\n",
@@ -510,19 +564,22 @@ int main(int argc, char *argv[]) {
         {"foreground", no_argument, 0, 'f'},
         {"config",     required_argument, 0, 'c'},
         {"poll",       required_argument, 0, 'p'},
+        {"diagnose",   no_argument, 0, 'd'},
         {"help",       no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
     bool foreground = false;
     bool show_status = false;
+    bool diagnose = false;
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "fc:p:hs", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "fc:p:dhs", long_opts, NULL)) != -1) {
         switch (opt) {
             case 'f': foreground = true; break;
             case 'c': config_path = optarg; break;
             case 'p': poll_interval = atoi(optarg); if (poll_interval < 10) poll_interval = 10; break;
+            case 'd': diagnose = true; break;
             case 's': show_status = true; break;
             case 'h': print_usage(argv[0]); return 0;
             default:  print_usage(argv[0]); return 1;
@@ -548,6 +605,9 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    /* --diagnose: run checks, exit */
+    if (diagnose) { cmd_diagnose(); return 0; }
+
     /* #1: reap children and track count */
     {
         struct sigaction sa;
@@ -572,7 +632,11 @@ int main(int argc, char *argv[]) {
         freopen("/dev/null", "w", stderr);
     }
 
-    write_pid_file();
+    /* Write PID file */
+    {
+        FILE *f = fopen(PID_FILE, "w");
+        if (f) { fprintf(f, "%d\n", getpid()); fclose(f); }
+    }
     atexit(remove_pid_file);
 
     log_message("=== Cron Scheduler v3.3 started (PID %d) ===", getpid());
