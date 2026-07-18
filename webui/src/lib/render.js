@@ -55,13 +55,14 @@ export function render(list) {
 
   el.innerHTML = list.map((s, idx) => {
     const c = badgeColor(idx);
+    const typeBadge = s.isCron ? '<span class="cron-badge">CRON</span>' : '';
     return '<div class="swipe-container">' +
       '<div class="swipe-bg">Delete</div>' +
       '<div class="swipe-content" data-idx="' + idx + '">' +
         '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '">' +
           '<div class="timeline-dot ' + c + '"></div>' +
           '<div class="timeline-body" onclick="openEdit(' + idx + ')">' +
-            '<span class="timeline-time">' + s.time + '</span>' +
+            '<span class="timeline-time">' + s.time + typeBadge + '</span>' +
             '<span class="timeline-label">' + label(s) + '</span>' +
           '</div>' +
           '<div class="timeline-actions">' +

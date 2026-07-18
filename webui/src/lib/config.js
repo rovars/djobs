@@ -1,6 +1,6 @@
 /* ==========================================================
    config — parse, serialise, and persist config.txt
-   Each line: HH:MM <shell command>
+   Supports: HH:MM <command>  OR  cron-expression <command>
    ========================================================== */
 import { esc, utf8ToBase64, run } from './utils.js';
 
@@ -15,8 +15,19 @@ export function parseConfig(text) {
     if (!t) continue;
     const off = t[0] === '#';
     const cl = off ? t.replace(/^#\s*/, '') : t;
-    const m = cl.match(/^(\d{2}:\d{2})\s+(.+)$/);
-    if (m) out.push({ line: i, time: m[1], cmd: m[2], disabled: off });
+
+    // Try HH:MM format
+    let m = cl.match(/^(\d{2}:\d{2})\s+(.+)$/);
+    if (m) {
+      out.push({ line: i, time: m[1], cmd: m[2], disabled: off, isCron: false });
+      continue;
+    }
+    // Try cron format: 5 cron-like tokens then command
+    m = cl.match(/^([\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+\s+[\d*,/\-\*]+)\s+(.+)$/);
+    if (m) {
+      out.push({ line: i, time: m[1], cmd: m[2], disabled: off, isCron: true });
+      continue;
+    }
   }
   return out;
 }

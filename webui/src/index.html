@@ -38,6 +38,10 @@
         <md-outlined-text-field label="Time" type="time" id="new-time" value="22:00" class="grow" style="flex:0 0 auto;width:82px"></md-outlined-text-field>
         <md-outlined-text-field label="Command" id="new-cmd" placeholder="svc data disable" class="grow"></md-outlined-text-field>
       </div>
+      <div class="form-cron-hint">
+        <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">info</span>
+        Also supports cron: <code>step/15 9-17 * * 1-5</code>
+      </div>
       <div class="form-actions">
         <md-outlined-button onclick="clearAddForm()">Clear</md-outlined-button>
         <md-filled-button onclick="add()">Add job</md-filled-button>
@@ -51,6 +55,10 @@
   <form slot="content" id="edit-form" method="dialog">
     <md-outlined-text-field label="Time" type="time" id="edit-time" class="full"></md-outlined-text-field>
     <md-outlined-text-field label="Command" id="edit-cmd" class="full" style="margin-top:12px"></md-outlined-text-field>
+    <div class="form-cron-hint" style="margin-top:6px">
+      <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">info</span>
+      Time field accepts <code>HH:MM</code> or full cron expression
+    </div>
     <label class="switch-row">
       <md-switch id="edit-disabled" aria-label="Enabled"></md-switch>
       <span>Enabled</span>

@@ -1,15 +1,18 @@
-#!/bin/sh
-# DailyJobs service script — runs automatically at boot.
-# Waits for boot completed signal, then starts the scheduler daemon.
+#!/system/bin/sh
+# DailyJobs v3.0 — Boot service script
+# Waits for boot, then starts the C scheduler daemon.
 
 export PATH="/data/adb/ksu/bin:$PATH"
 
-# Wait until the device has fully booted
+SCHEDULER=/data/adb/dailyjobs/scheduler
+
+# Wait for boot completion
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
   sleep 5
 done
+sleep 15
 
-# Let the system settle a bit more
-sleep 10
-
-nohup /data/adb/modules/dailyjobs/djobs.sh >/dev/null 2>&1 &
+# Start scheduler daemon if binary exists
+if [ -f "$SCHEDULER" ]; then
+  $SCHEDULER
+fi

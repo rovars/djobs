@@ -1,9 +1,13 @@
+native/zig*
+native/ELFkickers*
+native/scheduler
+native/scheduler_arm64
+native/wakeup_inspector
+native/wakeup_inspector_arm64
+zig-x86_64-linux-0.14.1/
+ELFkickers-3.2/
+*.zip
 node_modules/
-*.log
-.DS_Store
-*.swp
-package-lock.json
-!webui/package-lock.json
-
-# Generated webui build output (run: cd webui && npm run build)
-module/webroot/
+webui/dist/
+module/scheduler
+module/wakeup_inspector*

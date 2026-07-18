@@ -25,11 +25,34 @@ jobs:
         cache: 'npm'
         cache-dependency-path: webui/package-lock.json
 
+    - name: Setup Zig
+      run: |
+        wget -q https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
+        tar -xf zig-x86_64-linux-0.14.1.tar.xz
+        echo "$PWD/zig-x86_64-linux-0.14.1" >> $GITHUB_PATH
+
+    - name: Setup ELFkickers (sstrip)
+      run: |
+        wget -q https://www.muppetlabs.com/~breadbox/pub/software/ELFkickers-3.2.tar.gz
+        tar -xzf ELFkickers-3.2.tar.gz
+        make -C ELFkickers-3.2
+        echo "$PWD/ELFkickers-3.2/bin" >> $GITHUB_PATH
+
+    - name: Build C native + ARM64
+      run: |
+        cd native
+        chmod +x build.sh
+        ./build.sh arm64
+        # Copy binary to module/
+        cp scheduler_arm64 ../module/scheduler
+
     - name: Build webui
       run: |
         cd webui
         npm ci
         npm run build
+        # Copy dist to module/
+        cp -r dist/* ../module/ 2>/dev/null || true
 
     - name: Set variables
       run: |
@@ -38,8 +61,19 @@ jobs:
         COMMIT_ID=$(git rev-parse --short HEAD)
         echo "ZIP_NAME=${{ env.MODULE_NAME }}_${VERSION}-${VERSIONCODE}-${COMMIT_ID}" >> $GITHUB_ENV
 
+    - name: Package module
+      run: |
+        cd module
+        rm -f ../${{ env.ZIP_NAME }}.zip
+        zip -r9 ../${{ env.ZIP_NAME }}.zip . -x ".*" -x "*.sh" -x "config.txt"
+        # Full zip with config for releases
+        cd ..
+        mv module ${{ env.MODULE_NAME }}-module
+        mkdir -p release
+        cp ${{ env.ZIP_NAME }}.zip release/
+
     - name: Upload artifact
       uses: actions/upload-artifact@v7
       with:
         name: ${{ env.ZIP_NAME }}
-        path: 'module'
+        path: release/

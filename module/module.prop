@@ -1,7 +1,7 @@
 id=dailyjobs
 name=DailyJobs
-version=v2.0
-versionCode=4
+version=v3.0
+versionCode=5
 author=Dee
-description=Lightweight task scheduler with WebUI — pure shell, no cron
-updateJson=https://raw.githubusercontent.com/Dee/djobs/master/update.json
+description=Cron task scheduler with WebUI — C-based, RTC wakealarm, deep sleep safe
+updateJson=https://raw.githubusercontent.com/rovars/djobs/master/update.json

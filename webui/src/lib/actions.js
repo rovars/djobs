@@ -34,13 +34,14 @@ export async function saveEditFromDialog() {
   const newTime = $('edit-time').value;
   const newCmd  = $('edit-cmd').value.trim();
   const newDisabled = !$('edit-disabled').selected;
-  if (!newTime) return toastMsg('Pick a time');
+  if (!newTime) return toastMsg('Enter time or cron expression');
   if (!newCmd)  return toastMsg('Enter a command');
   try {
     const entries = getEntries();
     entries[editIdx].time = newTime;
     entries[editIdx].cmd = newCmd;
     entries[editIdx].disabled = newDisabled;
+    entries[editIdx].isCron = !/^\d{2}:\d{2}$/.test(newTime);
     await writeConfigFile(entries);
     toastMsg('Saved');
     $('edit-dialog').close();
@@ -72,16 +73,22 @@ export async function doDelFromDialog() {
 export async function add() {
   const time = $('new-time').value;
   const cmd  = $('new-cmd').value.trim();
-  if (!time) return toastMsg('Pick a time');
+  if (!time) return toastMsg('Enter time or cron expression');
   if (!cmd)  return toastMsg('Enter a command');
   try {
     const entries = getEntries();
     for (let i = 0; i < entries.length; i++)
       if (entries[i].time === time && entries[i].cmd === cmd)
         return toastMsg('Already exists');
-    entries.push({ time, cmd, disabled: false });
+    const isCron = !/^\d{2}:\d{2}$/.test(time);
+    entries.push({ time, cmd, disabled: false, isCron });
     await writeConfigFile(entries);
     toastMsg('Job added');
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
+}
+
+export function clearAddForm() {
+  $('new-time').value = '22:00';
+  $('new-cmd').value = '';
 }
