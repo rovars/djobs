@@ -165,10 +165,10 @@ pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
 
     let mut probe = after;
     for _days in 0..30 {
-        let mut local_time: libc::time_t = probe;
+        let mut local_time: libc::time_t = probe as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
         unsafe {
-            libc::localtime_r(&local_time, &mut tm);
+            libc::localtime_r(&local_time as *const libc::time_t, &mut tm);
         }
 
         let start_h = tm.tm_hour as usize;
