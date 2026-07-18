@@ -287,6 +287,8 @@ md-outlined-text-field {
   --md-outlined-text-field-caret-color: var(--accent);
   --md-outlined-text-field-label-text-color: var(--muted);
   --md-sys-color-primary: var(--accent);
+  --md-sys-color-on-surface: var(--text);
+  --md-sys-color-on-surface-variant: var(--text);
 }
 md-menu {
   --md-menu-container-color: var(--card);
@@ -300,6 +302,8 @@ md-dialog {
   --md-dialog-headline-color: #fff;
   --md-dialog-supporting-text-color: var(--muted);
   --md-sys-color-primary: var(--accent);
+  --md-sys-color-on-surface: var(--text);
+  --md-sys-color-on-surface-variant: var(--text);
 }
 .dialog-desc {
   color: var(--muted);
