@@ -34,9 +34,8 @@
   <section>
     <div class="section-header"><h2>New Job</h2></div>
     <div class="form-card">
-      <div class="form-row">
-        <md-outlined-text-field label="Job" id="new-line" placeholder='22:30 svc data disable  or  step/15 9-17 * * 1-5 echo "hi"' class="grow"></md-outlined-text-field>
-      </div>
+      <md-outlined-text-field label="Time" id="new-time" value="22:00" class="full" placeholder='22:00 or step/15 9-17 * * 1-5'></md-outlined-text-field>
+      <md-outlined-text-field label="Command" id="new-cmd" placeholder="svc data disable" class="full" style="margin-top:12px"></md-outlined-text-field>
       <div class="form-actions">
         <md-outlined-button onclick="clearAddForm()">Clear</md-outlined-button>
         <md-filled-button onclick="add()">Add job</md-filled-button>

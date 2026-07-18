@@ -44,7 +44,8 @@ function findEntryIndex(time, cmd) {
 
 /* ---- Clear add form ---- */
 export function clearAddForm() {
-  $('new-line').value = '';
+  $('new-time').value = '22:00';
+  $('new-cmd').value = '';
 }
 
 /* ---- Toggle enable/disable ---- */
@@ -130,15 +131,17 @@ export async function doDelFromDialog() {
 
 /* ---- Add job to schedule ---- */
 export async function add() {
-  const raw = $('new-line').value;
-  const parsed = parseLine(raw);
-  if (!parsed) return toastMsg('Use format: HH:MM command  or  cron command');
+  const time = $('new-time').value.trim();
+  const cmd  = $('new-cmd').value.trim();
+  if (!time) return toastMsg('Enter time or cron expression');
+  if (!cmd)  return toastMsg('Enter a command');
   try {
     const entries = getEntries();
     for (let i = 0; i < entries.length; i++)
-      if (entries[i].time === parsed.time && entries[i].cmd === parsed.cmd)
+      if (entries[i].time === time && entries[i].cmd === cmd)
         return toastMsg('Already exists');
-    entries.push({ time: parsed.time, cmd: parsed.cmd, disabled: false, isCron: parsed.isCron });
+    const isCron = !/^\d{2}:\d{2}$/.test(time);
+    entries.push({ time, cmd, disabled: false, isCron });
     await writeConfigFile(entries);
     toastMsg('Job added');
     clearAddForm();
