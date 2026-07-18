@@ -63,18 +63,9 @@ jobs:
         COMMIT_ID=$(git rev-parse --short HEAD)
         echo "ZIP_NAME=${{ env.MODULE_NAME }}_${VERSION}-${VERSIONCODE}-${COMMIT_ID}" >> $GITHUB_ENV
 
-    - name: Package module
-      run: |
-        cd module
-        rm -f ../${{ env.ZIP_NAME }}.zip
-        zip -r9 ../${{ env.ZIP_NAME }}.zip . -x ".*"
-        cd ..
-        mv module ${{ env.MODULE_NAME }}-module
-        mkdir -p release
-        cp ${{ env.ZIP_NAME }}.zip release/
-
     - name: Upload artifact
       uses: actions/upload-artifact@v7
       with:
         name: ${{ env.ZIP_NAME }}
-        path: release/
+        path: module/
+        if-no-files-found: error
