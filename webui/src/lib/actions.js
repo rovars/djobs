@@ -72,6 +72,21 @@ export function openEdit(idx) {
   $('edit-dialog').show();
 }
 
+/* Delete from within edit dialog */
+export async function deleteFromEdit() {
+  if (!editIdentity || !confirm('Remove this job?')) return;
+  try {
+    const idx = findEntryIndex(editIdentity.time, editIdentity.cmd);
+    if (idx < 0) return toastMsg('Entry not found');
+    const entries = getEntries();
+    entries.splice(idx, 1);
+    await writeConfigFile(entries);
+    toastMsg('Deleted');
+    $('edit-dialog').close();
+    load();
+  } catch (x) { toastMsg('Error: ' + x.message); }
+}
+
 export async function saveEditFromDialog() {
   const raw = $('edit-line').value;
   const parsed = parseLine(raw);
