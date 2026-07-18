@@ -575,7 +575,7 @@ int main(int argc, char *argv[]) {
     write_pid_file();
     atexit(remove_pid_file);
 
-    log_message("=== Cron Scheduler v3.0 started (PID %d) ===", getpid());
+    log_message("=== Cron Scheduler v3.3 started (PID %d) ===", getpid());
 
     int epoll_fd = epoll_create1(EPOLL_CLOEXEC);
     if (epoll_fd < 0) {
@@ -686,7 +686,7 @@ int main(int argc, char *argv[]) {
         close(tfd);
     }
 
-    log_message("=== Cron Scheduler v3.0 stopped ===");
+    log_message("=== Cron Scheduler v3.3 stopped ===");
     close(epoll_fd);
     close(reload_pipe[0]);
     close(reload_pipe[1]);

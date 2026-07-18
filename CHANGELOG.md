@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.3
+- Fix: dialogs not opening (CSS selector prefix bug in $())
+- Fix: FAB replaced with wide text-only button
+- Fix: Google Fonts CDN removed (privacy)
+- Fix: yellow/gold accent replaced with slate gray
+- Fix: unused Material Symbols icon dependency removed
+- Security: atomic config write, popen() replaced, escHtml improved
+
 ## v3.2
 - Fix: 8x duplicate execution on SIGHUP (EINTR + pipe race)
 - Fix: stale PID / dual daemon / orphan children in control scripts
