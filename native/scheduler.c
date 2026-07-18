@@ -36,6 +36,7 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <getopt.h>
 
 /* ============================================================
@@ -76,7 +77,7 @@ static int task_count = 0;
  * ============================================================ */
 
 static volatile sig_atomic_t running = 1;
-static volatile sig_atomic_t child_count = 0;
+static atomic_int child_count = 0;
 #define MAX_CHILDREN 8
 static int sighup_pipe_write_fd = -1;
 static time_t last_task_check = 0;
@@ -130,7 +131,7 @@ static void signal_handler(int sig) {
     }
     if (sig == SIGCHLD) {
         while (waitpid(-1, NULL, WNOHANG) > 0)
-            __sync_sub_fetch(&child_count, 1);
+            atomic_fetch_sub(&child_count, 1);
         return;
     }
     /* SIGINT / SIGTERM */
@@ -346,8 +347,8 @@ static time_t find_next_cron_task(void) {
  * ============================================================ */
 
 static void run_command(const char *cmd) {
-    if (__sync_fetch_and_add(&child_count, 1) >= MAX_CHILDREN) {
-        __sync_sub_fetch(&child_count, 1);
+    if (atomic_fetch_add(&child_count, 1) >= MAX_CHILDREN) {
+        atomic_fetch_sub(&child_count, 1);
         log_message("Too many children (%d), skipping: %s", child_count, cmd);
         return;
     }
@@ -356,7 +357,7 @@ static void run_command(const char *cmd) {
 
     pid_t pid = fork();
     if (pid < 0) {
-        __sync_sub_fetch(&child_count, 1);
+        atomic_fetch_sub(&child_count, 1);
         log_message("Fork failed: %s", strerror(errno));
         return;
     }

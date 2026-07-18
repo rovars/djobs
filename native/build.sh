@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 
 ZIG="${ZIG:-zig}"
 STRIP="${STRIP:-sstrip}"
-CFLAGS="-O2 -std=c11 -Wall -Wextra"
+CFLAGS="-O2 -std=gnu11 -Wall -Wextra"
 
 if [ -f "$PWD/zig" ]; then ZIG="$PWD/zig"; fi
 if [ -f "$PWD/sstrip" ]; then STRIP="$PWD/sstrip"; fi

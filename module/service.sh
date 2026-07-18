@@ -22,16 +22,11 @@ update_status() {
 }
 
 # Wait for boot with timeout (120s max)
+# sys.boot_completed=1 means Android is fully up,
+# including data decryption. No need to check
+# dev.bootcomplete (OEM-specific) or vold.decrypt.
 waited=0
-while [ "$waited" -lt 12 ]; do
-  boot_ok=1
-  [ "$(getprop sys.boot_completed)" = "1" ] || boot_ok=0
-  [ -z "$(getprop dev.bootcomplete)" ] || boot_ok=0
-  # Also check encryption state
-  ds=$(getprop vold.decrypt)
-  [ "$ds" = "trigger_encryption" ] && boot_ok=0
-  [ "$ds" = "trigger_default_encryption" ] && boot_ok=0
-  [ "$boot_ok" = "1" ] && break
+while [ "$waited" -lt 12 ] && [ "$(getprop sys.boot_completed)" != "1" ]; do
   sleep 10
   waited=$((waited + 1))
 done

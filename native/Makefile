@@ -1,5 +1,5 @@
 CC = zig
-CFLAGS = -O2 -std=c11 -Wall -Wextra
+CFLAGS = -O2 -std=gnu11 -Wall -Wextra
 TARGET_ARM64 = aarch64-linux-musl
 TARGET_ARM = arm-linux-musleabihf
 STRIP = sstrip
