@@ -1,8 +1,6 @@
 #!/bin/sh
 # DailyJobs v3.0 installer — KernelSU / Magisk / APatch
 
-SERVICE_DIR="/data/adb/service.d"
-
 # ---- Detect CPU architecture ----
 ARCH=$(uname -m)
 case "$ARCH" in
@@ -25,7 +23,7 @@ case "$ARCH" in
 esac
 
 # ---- Install ----
-mkdir -p /data/adb/dailyjobs/bin "$SERVICE_DIR"
+mkdir -p /data/adb/dailyjobs/bin
 
 # Default config
 if [ ! -f /data/adb/dailyjobs/config.txt ]; then
@@ -59,4 +57,4 @@ rm -rf "$MODPATH/dailyjobs"
 ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
 
 ui_print "- [DailyJobs] Installation complete!"
-ui_print "- Reboot or run: $SERVICE_DIR/dailyjobs.sh start"
+ui_print "- Reboot or run: /data/adb/dailyjobs/djobs.sh start"

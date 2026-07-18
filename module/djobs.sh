@@ -2,7 +2,9 @@
 # DailyJobs v3.1 — control script
 # Manages the scheduler daemon (start/stop/restart/status)
 
-export PATH="/data/adb/ksu/bin:$PATH"
+PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH
+MODDIR=/data/adb/modules/dailyjobs
+PERSISTENT_DIR=/data/adb/dailyjobs
 
 SCHEDULER=/data/adb/dailyjobs/scheduler
 PID_FILE=/data/adb/dailyjobs/scheduler.pid
