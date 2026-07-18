@@ -1,5 +1,21 @@
 # Changelog
 
+## v3.2
+- Fix: 8x duplicate execution on SIGHUP (EINTR + pipe race)
+- Fix: stale PID / dual daemon / orphan children in control scripts
+- Fix: SIGTERM ignored during task execution
+- Fix: SIGTERM EINTR falsely triggering task execution
+- Fix: child_count RMW race (atomic counter via stdatomic.h)
+- Fix: MAX_CHILDREN=8 fork bomb guard
+- Fix: uninstall now always removes everything (no silent prompt)
+- Fix: webui index-based operations replaced with stable IDs
+- Fix: webui deleteFromEdit was no-op (missing deleteId)
+- Fix: shell injection via innerHTML (escHtml sanitization)
+- Feat: FAB + dialog for adding jobs (was inline form)
+- Feat: input validation for cron/time format client-side
+- Feat: crash recovery in boot service (auto-restart loop)
+- Build: use gnu11 + stdatomic.h (fix zig cc compatibility)
+
 ## v3.1
 - Fix: `-c` and `-p` CLI flags now work (were parsed but ignored)
 - Fix: add() was missing `writeConfigFile()` — tasks never saved
