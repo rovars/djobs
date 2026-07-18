@@ -5,6 +5,7 @@
 import { esc, utf8ToBase64, run } from './utils.js';
 
 const CFG = '/data/adb/dailyjobs/config.txt';
+const CFG_TMP = '/data/adb/dailyjobs/config.txt.tmp';
 
 /** Parse raw config.txt text into structured entries */
 export function parseConfig(text) {
@@ -44,7 +45,8 @@ export function serializeConfig(entries) {
 export async function writeConfigFile(entries) {
   const content = serializeConfig(entries);
   const b64 = utf8ToBase64(content);
-  const write = "printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG);
+  // Write to .tmp then atomic mv to prevent partial reads
+  const write = "printf '%s' " + esc(b64) + ' | base64 -d > ' + esc(CFG_TMP) + ' && mv -f ' + esc(CFG_TMP) + ' ' + esc(CFG);
   await run(write);
   // SIGHUP scheduler daemon to reload config (ignore if stopped)
   await run("kill -HUP $(cat /data/adb/dailyjobs/scheduler.pid 2>/dev/null) 2>/dev/null || true");

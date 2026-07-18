@@ -23,6 +23,8 @@
 #include <linux/rtc.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
+#include <ftw.h>
 
 #define RED     "\033[91m"
 #define GREEN   "\033[92m"
@@ -71,8 +73,7 @@ static void check_wakeup_sources(void) {
 
     if (access("/sys/kernel/debug/wakeup_sources", F_OK) != 0) {
         if (access("/sys/kernel/debug", F_OK) == 0) {
-            FILE *m = popen("mount -t debugfs none /sys/kernel/debug 2>/dev/null", "r");
-            if (m) pclose(m);
+            mount("none", "/sys/kernel/debug", "debugfs", 0, NULL);
         }
     }
 
@@ -261,21 +262,21 @@ static void check_timerfd(void) {
     }
 }
 
+/* nftw callback for finding alarmtimer directories */
+static int alarmtimer_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    (void)sb; (void)ftwbuf;
+    if (typeflag == FTW_D && strcmp(fpath + strlen(fpath) - 10, "alarmtimer") == 0)
+        printf("  Device: %s\n", fpath);
+    return 0;
+}
+
 /* Alarmtimer device */
 static void check_alarmtimer(void) {
     printf("\n" BOLD "╔══════════════════════════════════════════════════════════╗\n" RESET);
     printf(BOLD "║         ALARMTIMER                                       ║\n" RESET);
     printf(BOLD "╚══════════════════════════════════════════════════════════╝\n" RESET);
 
-    FILE *pipe = popen("find /sys/devices -name 'alarmtimer' -type d 2>/dev/null | head -5", "r");
-    if (pipe) {
-        char buf[256];
-        while (fgets(buf, sizeof(buf), pipe)) {
-            buf[strcspn(buf, "\n")] = '\0';
-            printf("  Device: %s\n", buf);
-        }
-        pclose(pipe);
-    }
+    nftw("/sys/devices", alarmtimer_cb, 20, FTW_DEPTH | FTW_PHYS);
 }
 
 /* Summary */
