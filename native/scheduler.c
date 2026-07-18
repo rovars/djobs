@@ -700,7 +700,6 @@ int main(int argc, char *argv[]) {
                 /* Only execute if still running (SIGTERM also
                  * triggers EINTR and sets running=0). */
                 if (running) {
-                    last_task_check = 0;
                     load_cron_tasks();
                     execute_due_tasks(time(NULL));
                 }
