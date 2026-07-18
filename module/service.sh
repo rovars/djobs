@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # DailyJobs v3.1 — Boot service script
-# Waits for boot, then starts the C scheduler daemon.
+# Waits for boot, starts the C scheduler daemon, restarts on crash.
 
 export PATH="/data/adb/ksu/bin:$PATH"
 
@@ -15,17 +15,28 @@ for d in /data/adb/ksu/modules/dailyjobs/module.prop \
   [ -f "$d" ] && MODULE_PROP="$d" && break
 done
 
-# Wait for boot
-while [ "$(getprop sys.boot_completed)" != "1" ]; do
-  sleep 5
-done
-sleep 15
+update_status() {
+  local label="$1"
+  [ -n "$MODULE_PROP" ] || return
+  sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ $label ] /g" "$MODULE_PROP" 2>/dev/null
+}
 
-# Start scheduler
-if [ -f "$SCHEDULER" ]; then
+# Wait for boot — check both boot_completed and package manager
+while [ "$(getprop sys.boot_completed)" != "1" ] || [ -z "$(getprop dev.bootcomplete)" ]; do
+  sleep 10
+done
+# Additional wait for data decryption on encrypted devices
+while [ "$(getprop vold.decrypt)" = "trigger_encryption" ] || [ "$(getprop vold.decrypt)" = "trigger_default_encryption" ]; do
+  sleep 10
+done
+sleep 30
+
+# Start scheduler with crash recovery
+while [ -f "$SCHEDULER" ]; do
   $SCHEDULER
-  sleep 2
-  if [ -n "$MODULE_PROP" ] && [ -f "$PID_FILE" ]; then
-    sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ ✅ Running ] /g" "$MODULE_PROP" 2>/dev/null
-  fi
-fi
+  local exit_code=$?
+  update_status "⚠️ Crashed"
+  sleep 10
+  # Don't restart if module was removed
+  [ -d "/data/adb/dailyjobs" ] || break
+done
