@@ -25,10 +25,9 @@ jobs:
         cache: 'npm'
         cache-dependency-path: webui/package-lock.json
 
-    - name: Setup Rust + cargo-ndk
+    - name: Setup Rust + Android targets
       run: |
         rustup target add aarch64-linux-android armv7-linux-androideabi
-        cargo install cargo-ndk
 
     - name: Build Rust binaries
       run: |
