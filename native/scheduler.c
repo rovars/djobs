@@ -76,8 +76,10 @@ static int task_count = 0;
  * ============================================================ */
 
 static volatile sig_atomic_t running = 1;
-static int sighup_pipe_write_fd = -1;   /* untuk SIGHUP reload */
-static time_t last_task_check = 0;      /* untuk deteksi missed task */
+static int sighup_pipe_write_fd = -1;
+static time_t last_task_check = 0;
+static char *config_path = CRON_ROOT;
+static int poll_interval = DEFAULT_POLL_INTERVAL;
 
 /* ============================================================
  *  Forward declarations
@@ -264,9 +266,9 @@ static int parse_cron_line(const char *line, CronTask *task) {
 }
 
 static int load_cron_tasks(void) {
-    FILE *f = fopen(CRON_ROOT, "r");
+    FILE *f = fopen(config_path, "r");
     if (!f) {
-        log_message("Cannot open %s: %s", CRON_ROOT, strerror(errno));
+        log_message("Cannot open %s: %s", config_path, strerror(errno));
         return -1;
     }
 
@@ -327,7 +329,7 @@ static time_t find_next_cron_task(void) {
         tm = localtime(&now);
     }
 
-    return time(NULL) + DEFAULT_POLL_INTERVAL;
+    return time(NULL) + poll_interval;
 }
 
 /* ============================================================
@@ -496,8 +498,8 @@ int main(int argc, char *argv[]) {
     while ((opt = getopt_long(argc, argv, "fc:p:h", long_opts, NULL)) != -1) {
         switch (opt) {
             case 'f': foreground = true; break;
-            case 'c': break;
-            case 'p': break;
+            case 'c': config_path = optarg; break;
+            case 'p': poll_interval = atoi(optarg); if (poll_interval < 10) poll_interval = 10; break;
             case 'h': print_usage(argv[0]); return 0;
             default:  print_usage(argv[0]); return 1;
         }
