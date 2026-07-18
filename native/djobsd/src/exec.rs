@@ -21,27 +21,23 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
         .open(log_path)
         .map_err(|e| format!("cannot open log: {e}"))?;
 
-    CHILD_COUNT.fetch_add(1, Ordering::SeqCst);
-
-    match Command::new("sh")
+    let child = Command::new("sh")
         .args(["-c", cmd])
         .stdout(log_file.try_clone().map_err(|e| format!("dup stdout: {e}"))?)
         .stderr(log_file)
         .spawn()
-    {
-        Ok(child) => {
-            log::info!("Exec: {cmd} (PID {})", child.id());
-            Ok(())
-        }
-        Err(e) => {
-            CHILD_COUNT.fetch_sub(1, Ordering::SeqCst);
-            Err(format!("spawn failed: {e}"))
-        }
-    }
+        .map_err(|e| format!("spawn failed: {e}"))?;
+
+    // Increment AFTER spawn succeeds — prevents counter drift if SIGCHLD
+    // fires between fetch_add and spawn() completion.
+    CHILD_COUNT.fetch_add(1, Ordering::SeqCst);
+    log::info!("Exec: {cmd} (PID {})", child.id());
+    Ok(())
 }
 
 /// Reap any terminated child processes (zombie cleanup).
 /// Returns the number of children reaped.
+/// Must be async-signal-safe — do NOT add logging here.
 pub fn reap_children() -> usize {
     let mut count = 0;
     unsafe {
@@ -54,4 +50,12 @@ pub fn reap_children() -> usize {
         CHILD_COUNT.fetch_sub(count, Ordering::SeqCst);
     }
     count
+}
+
+/// Log child reap count (only safe outside signal handler context).
+pub fn log_reap_count(count: usize) {
+    if count > 0 {
+        log::info!("Reaped {count} child process(es), running: {}",
+            CHILD_COUNT.load(Ordering::SeqCst));
+    }
 }

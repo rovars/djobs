@@ -6,6 +6,18 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::time::Duration;
 
+fn log_close(fd: i32, label: &str) {
+    if fd >= 0 && unsafe { libc::close(fd) } < 0 {
+        log::error!("close({label}) failed: {}", std::io::Error::last_os_error());
+    }
+}
+
+fn log_epoll_del(epoll_fd: i32, fd: i32, label: &str) {
+    if unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, fd, std::ptr::null_mut()) } < 0 {
+        log::error!("epoll_ctl DEL {label} failed: {}", std::io::Error::last_os_error());
+    }
+}
+
 /// DailyJobs cron scheduler daemon — deep-sleep safe
 #[derive(Parser)]
 #[command(version = "4.0.0", about = None)]
@@ -25,6 +37,7 @@ struct Args {
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 static SIGHUP_PIPE_WRITE: AtomicI32 = AtomicI32::new(-1);
+static SIGCHLD_PENDING: AtomicBool = AtomicBool::new(false);
 
 unsafe extern "C" fn signal_handler(sig: i32) {
     match sig {
@@ -39,7 +52,14 @@ unsafe extern "C" fn signal_handler(sig: i32) {
             RUNNING.store(false, Ordering::SeqCst);
         }
         libc::SIGCHLD => {
-            exec::reap_children();
+            // Only set flag + wake epoll — actual reaping happens in main loop.
+            // Must NOT call log::info! or any non-async-signal-safe function.
+            SIGCHLD_PENDING.store(true, Ordering::SeqCst);
+            let fd = SIGHUP_PIPE_WRITE.load(Ordering::SeqCst);
+            if fd >= 0 {
+                let val: u8 = 0;
+                let _ = libc::write(fd, &val as *const u8 as *const libc::c_void, 1);
+            }
         }
         _ => {}
     }
@@ -103,7 +123,9 @@ fn execute_due_tasks(
                 tm.tm_wday as usize,
             ) {
                 log::info!("Task due: {}", task.command);
-                let _ = exec::spawn_command(&task.command, log_path);
+                if let Err(e) = exec::spawn_command(&task.command, log_path) {
+                    log::warn!("Failed to spawn task \"{}\": {e}", task.command);
+                }
                 executed += 1;
             }
         }
@@ -133,7 +155,9 @@ fn execute_due_tasks(
                 tm.tm_wday as usize,
             ) {
                 log::info!("Task due: {}", task.command);
-                let _ = exec::spawn_command(&task.command, log_path);
+                if let Err(e) = exec::spawn_command(&task.command, log_path) {
+                    log::warn!("Failed to spawn task \"{}\": {e}", task.command);
+                }
                 executed += 1;
             }
         }
@@ -175,8 +199,8 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
         spec.it_value.tv_sec = remaining as libc::time_t;
         let ret = unsafe { libc::timerfd_settime(tfd, 0, &spec, std::ptr::null_mut()) };
         if ret < 0 {
-            log::error!("timerfd_settime failed");
-            unsafe { libc::close(tfd); }
+            log::error!("timerfd_settime (relative) failed");
+            log_close(tfd, "timerfd");
             return None;
         }
     }
@@ -188,7 +212,7 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
     let ret = unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_ADD, tfd, &mut ev) };
     if ret < 0 {
         log::error!("epoll_ctl ADD failed");
-        unsafe { libc::close(tfd); }
+        log_close(tfd, "timerfd");
         return None;
     }
 
@@ -237,7 +261,13 @@ fn main() {
     let poll_interval = args.poll;
     let mut last_check: i64 = 0;
 
-    while RUNNING.load(Ordering::Relaxed) {
+    while RUNNING.load(Ordering::SeqCst) {
+        // Check if SIGCHLD fired since last iteration
+        if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
+            let n = exec::reap_children();
+            exec::log_reap_count(n);
+        }
+
         let cfg = match config::load_config(&config_path) {
             Ok(c) => c,
             Err(e) => {
@@ -252,7 +282,7 @@ fn main() {
 
         if next_ts.is_none() || next_ts.unwrap() <= now {
             execute_due_tasks(&cfg.tasks, &mut last_check, now, &log_path);
-            if !RUNNING.load(Ordering::Relaxed) { break; }
+            if !RUNNING.load(Ordering::SeqCst) { break; }
             continue;
         }
 
@@ -280,7 +310,7 @@ fn main() {
             let err = std::io::Error::last_os_error();
             if err.raw_os_error() == Some(libc::EINTR) {
                 log::info!("Interrupted by signal");
-                if RUNNING.load(Ordering::Relaxed) {
+                if RUNNING.load(Ordering::SeqCst) {
                     let cfg2 = config::load_config(&config_path).unwrap_or(cfg);
                     execute_due_tasks(&cfg2.tasks, &mut last_check, config::now_ts(), &log_path);
                 }
@@ -288,8 +318,8 @@ fn main() {
                 log::error!("epoll_wait error: {err}");
                 std::thread::sleep(Duration::from_secs(5));
             }
-            unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, tfd, std::ptr::null_mut()); }
-            unsafe { libc::close(tfd); }
+            log_epoll_del(epoll_fd, tfd, "timerfd");
+            log_close(tfd, "timerfd");
             continue;
         }
 
@@ -305,7 +335,9 @@ fn main() {
                 execute_due_tasks(&cfg.tasks, &mut last_check, config::now_ts(), &log_path);
             } else if events[i].u64 == reload_pipe[0] as u64 {
                 let mut buf: [u8; 64] = [0; 64];
-                let _ = unsafe { libc::read(reload_pipe[0], buf.as_mut_ptr() as *mut libc::c_void, 64) };
+                if unsafe { libc::read(reload_pipe[0], buf.as_mut_ptr() as *mut libc::c_void, 64) } < 0 {
+                    log::error!("read(reload_pipe) failed: {}", std::io::Error::last_os_error());
+                }
                 log::info!("SIGHUP: reloading config");
             }
         }
@@ -315,12 +347,30 @@ fn main() {
             execute_due_tasks(&cfg.tasks, &mut last_check, config::now_ts(), &log_path);
         }
 
-        unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, tfd, std::ptr::null_mut()); }
-        unsafe { libc::close(tfd); }
+        // Drain any SIGCHLD that arrived during task execution
+        if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
+            let n = exec::reap_children();
+            exec::log_reap_count(n);
+        }
+
+        log_epoll_del(epoll_fd, tfd, "timerfd");
+        log_close(tfd, "timerfd");
+    }
+
+    // Final SIGCHLD drain before exit
+    if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
+        let n = exec::reap_children();
+        exec::log_reap_count(n);
     }
 
     log::info!("=== djobsd v4.0.0 stopped ===");
-    unsafe { libc::close(epoll_fd); }
-    unsafe { libc::close(reload_pipe[0]); }
-    unsafe { libc::close(reload_pipe[1]); }
+    if unsafe { libc::close(epoll_fd) } < 0 {
+        log::error!("close(epoll_fd) failed: {}", std::io::Error::last_os_error());
+    }
+    if unsafe { libc::close(reload_pipe[0]) } < 0 {
+        log::error!("close(reload_pipe[0]) failed: {}", std::io::Error::last_os_error());
+    }
+    if unsafe { libc::close(reload_pipe[1]) } < 0 {
+        log::error!("close(reload_pipe[1]) failed: {}", std::io::Error::last_os_error());
+    }
 }

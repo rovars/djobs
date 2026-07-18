@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::collections::VecDeque;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::{fs, thread, time::Duration};
@@ -38,15 +39,15 @@ fn read_pid() -> Option<u32> {
 }
 
 fn is_running() -> bool {
-    let pid = read_pid().map(|p| p.to_string());
-    match pid {
-        Some(p) => Command::new("kill")
-            .arg("-0")
-            .arg(&p)
-            .status()
-            .map_or(false, |s| s.success()),
-        None => false,
-    }
+    let pid = match read_pid() {
+        Some(p) => p.to_string(),
+        None => return false,
+    };
+    Command::new("kill")
+        .arg("-0")
+        .arg(&pid)
+        .status()
+        .map_or(false, |s| s.success())
 }
 
 fn is_daemon_installed() -> bool {
@@ -66,7 +67,10 @@ fn wait_for_death(pid: u32) {
         }
         thread::sleep(Duration::from_secs(1));
     }
-    let _ = Command::new("kill").arg("-9").arg(&pid_str).status();
+    eprintln!("[DailyJobs] Force killing PID {pid}...");
+    if let Err(e) = Command::new("kill").arg("-9").arg(&pid_str).status() {
+        eprintln!("[DailyJobs] kill -9 failed: {e}");
+    }
 }
 
 fn start_daemon() {
@@ -87,8 +91,14 @@ fn start_daemon() {
     let child = match Command::new(DAEMON_BIN)
         .arg("--config")
         .arg("/data/adb/dailyjobs/config.txt")
-        .stdout(fs::File::create("/dev/null").unwrap())
-        .stderr(fs::File::create("/dev/null").unwrap())
+        .stdout(fs::File::create("/dev/null").unwrap_or_else(|e| {
+            eprintln!("[DailyJobs] Cannot open /dev/null: {e}");
+            std::process::exit(1);
+        }))
+        .stderr(fs::File::create("/dev/null").unwrap_or_else(|e| {
+            eprintln!("[DailyJobs] Cannot open /dev/null: {e}");
+            std::process::exit(1);
+        }))
         .spawn()
     {
         Ok(c) => c,
@@ -98,7 +108,9 @@ fn start_daemon() {
         }
     };
 
-    fs::write(PID_FILE, child.id().to_string()).ok();
+    if let Err(e) = fs::write(PID_FILE, child.id().to_string()) {
+        eprintln!("[DailyJobs] Warning: could not write PID file: {e}");
+    }
     thread::sleep(Duration::from_millis(500));
 
     if is_running() {
@@ -121,14 +133,38 @@ fn stop_daemon() {
 
     eprintln!("[DailyJobs] Stopping scheduler (PID {pid})...");
 
-    let _ = Command::new("sh")
+    if let Err(e) = Command::new("sh")
         .args(["-c", &format!("pkill -P {pid} 2>/dev/null || true")])
-        .status();
-    let _ = Command::new("kill").arg(pid.to_string()).status();
+        .status()
+    {
+        eprintln!("[DailyJobs] Warning: pkill failed: {e}");
+    }
+    if let Err(e) = Command::new("kill").arg(pid.to_string()).status() {
+        eprintln!("[DailyJobs] Warning: kill failed: {e}");
+    }
 
     wait_for_death(pid);
-    let _ = fs::remove_file(PID_FILE);
+    if let Err(e) = fs::remove_file(PID_FILE) {
+        eprintln!("[DailyJobs] Warning: could not remove PID file: {e}");
+    }
     eprintln!("[DailyJobs] Stopped");
+}
+
+/// Read the last `n` lines from a file without loading it entirely.
+fn read_last_lines(path: &str, n: usize) -> Result<Vec<String>, std::io::Error> {
+    let file = fs::File::open(path)?;
+    let reader = BufReader::new(file);
+    let mut lines: VecDeque<String> = VecDeque::with_capacity(n);
+
+    for line in reader.lines() {
+        let line = line?;
+        if lines.len() >= n {
+            lines.pop_front();
+        }
+        lines.push_back(line);
+    }
+
+    Ok(lines.into())
 }
 
 fn main() {
@@ -145,13 +181,15 @@ fn main() {
             if is_running() {
                 let pid = read_pid().unwrap_or(0);
                 println!("[DailyJobs] Running (PID {pid})");
-                if let Ok(log) = fs::read_to_string(LOG_FILE) {
-                    let lines: Vec<&str> = log.lines().rev().take(3).collect();
-                    for line in lines.iter().rev() {
-                        println!("{line}");
+                match read_last_lines(LOG_FILE, 3) {
+                    Ok(lines) => {
+                        for line in &lines {
+                            println!("{line}");
+                        }
                     }
-                } else {
-                    println!("[DailyJobs] No log file yet");
+                    Err(_) => {
+                        println!("[DailyJobs] No log file yet");
+                    }
                 }
             } else {
                 println!("[DailyJobs] Stopped");
@@ -159,20 +197,16 @@ fn main() {
         }
         Commands::Logs { n: lines } => {
             let n = lines.unwrap_or(50);
-            if let Ok(file) = fs::File::open(LOG_FILE) {
-                let reader = BufReader::new(file);
-                let all_lines: Vec<String> = reader.lines().filter_map(|l| l.ok()).collect();
-                let start = if all_lines.len() > n {
-                    all_lines.len() - n
-                } else {
-                    0
-                };
-                for line in &all_lines[start..] {
-                    println!("{line}");
+            match read_last_lines(LOG_FILE, n) {
+                Ok(lines) => {
+                    for line in &lines {
+                        println!("{line}");
+                    }
                 }
-            } else {
-                eprintln!("[DailyJobs] No log file");
-                std::process::exit(1);
+                Err(e) => {
+                    eprintln!("[DailyJobs] Cannot read log file: {e}");
+                    std::process::exit(1);
+                }
             }
         }
     }

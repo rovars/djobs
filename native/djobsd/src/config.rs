@@ -75,11 +75,13 @@ fn parse_cron_field<const N: usize>(field: &str, base: u8) -> Result<[bool; N], 
         if let Some(dash) = token.find('-') {
             let lo: usize = token[..dash].parse().map_err(|_| format!("invalid range: {token}"))?;
             let hi: usize = token[dash+1..].parse().map_err(|_| format!("invalid range: {token}"))?;
-            let lo = lo.saturating_sub(base as usize);
+            // Clamp lo to base — values below base (e.g. day 0) are invalid
+            let lo = std::cmp::max(lo, base as usize).saturating_sub(base as usize);
             let hi = std::cmp::min(hi.saturating_sub(base as usize), N - 1);
             for i in lo..=hi { bits[i] = true; }
         } else {
             let v: usize = token.parse().map_err(|_| format!("invalid value: {token}"))?;
+            if v < base as usize { continue; }
             let idx = v.saturating_sub(base as usize);
             if idx < N { bits[idx] = true; }
         }
@@ -150,11 +152,12 @@ pub fn cron_matches(task: &CronTask, minute: usize, hour: usize, dom: usize,
 }
 
 /// Find the next future time where any task matches.
-/// Iterates up to 30 days ahead.
+/// Iterates up to 30 days ahead. Uses mktime for DST-safe day boundaries.
 pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
     if tasks.is_empty() { return None; }
 
     let mut probe = after;
+
     for _days in 0..30 {
         let local_time: libc::time_t = probe as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
@@ -186,7 +189,15 @@ pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
                 }
             }
         }
-        probe += 86400;
+
+        // Move to next day — DST-safe via mktime normalization
+        tm.tm_hour = 0;
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        tm.tm_mday += 1;
+        tm.tm_isdst = -1;
+        probe = unsafe { libc::mktime(&mut tm) } as i64;
+        if probe < 0 { break; }
     }
     None
 }
