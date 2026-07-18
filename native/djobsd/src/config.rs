@@ -115,15 +115,8 @@ pub fn parse_cron_line(line: &str) -> Result<CronTask, String> {
     task.month  = parse_cron_field(fields[3], 1)?;
     task.dow    = parse_cron_field(fields[4], 0)?;
 
-    // Command = everything after the 5th field (preserve spaces)
-    let field_end = fields[..5].iter().map(|f| f.len()).sum::<usize>() + 5; // 5 spaces
-    let cmd_start = line_no_comment
-        .chars()
-        .skip(field_end)
-        .collect::<String>()
-        .trim()
-        .to_string();
-    task.command = cmd_start;
+    // Command = everything after the 5th field (collapse whitespace)
+    task.command = line_no_comment.split_whitespace().skip(5).collect::<Vec<_>>().join(" ");
 
     Ok(task)
 }

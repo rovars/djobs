@@ -4,7 +4,7 @@ mod exec;
 use clap::Parser;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 /// DailyJobs cron scheduler daemon — deep-sleep safe
 #[derive(Parser)]
@@ -25,13 +25,6 @@ struct Args {
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 static SIGHUP_PIPE_WRITE: AtomicI32 = AtomicI32::new(-1);
-
-fn now_ts() -> i64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs() as i64
-}
 
 unsafe extern "C" fn signal_handler(sig: i32) {
     match sig {
@@ -154,7 +147,7 @@ fn execute_due_tasks(
 }
 
 fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
-    let now = now_ts();
+    let now = config::now_ts();
     let remaining = std::cmp::max(target_ts - now, 5);
 
     let tfd = unsafe {
@@ -255,7 +248,7 @@ fn main() {
             }
         };
 
-        let now = now_ts();
+        let now = config::now_ts();
         let next_ts = config::find_next_task(&cfg.tasks, now);
 
         if next_ts.is_none() || next_ts.unwrap() <= now {
@@ -265,7 +258,7 @@ fn main() {
         }
 
         let next = next_ts.unwrap();
-        let now2 = now_ts();
+        let now2 = config::now_ts();
         if now2 >= next { continue; }
 
         let tfd = match arm_timerfd(epoll_fd, next) {
@@ -290,7 +283,7 @@ fn main() {
                 log::info!("Interrupted by signal");
                 if RUNNING.load(Ordering::Relaxed) {
                     let cfg2 = config::load_config(&config_path).unwrap_or(cfg);
-                    execute_due_tasks(&cfg2.tasks, &mut last_check, now_ts(), &log_path);
+                    execute_due_tasks(&cfg2.tasks, &mut last_check, config::now_ts(), &log_path);
                 }
             } else {
                 log::error!("epoll_wait error: {err}");
@@ -310,7 +303,7 @@ fn main() {
                 let mut exp: u64 = 0;
                 unsafe { libc::read(tfd, &mut exp as *mut u64 as *mut libc::c_void, 8); }
                 log::info!("Timer fired! {exp} expiration(s)");
-                execute_due_tasks(&cfg.tasks, &mut last_check, now_ts(), &log_path);
+                execute_due_tasks(&cfg.tasks, &mut last_check, config::now_ts(), &log_path);
             } else if events[i].u64 == reload_pipe[0] as u64 {
                 let mut buf: [u8; 64] = [0; 64];
                 let _ = unsafe { libc::read(reload_pipe[0], buf.as_mut_ptr() as *mut libc::c_void, 64) };
@@ -320,7 +313,7 @@ fn main() {
 
         if !timer_fired {
             last_check = 0;
-            execute_due_tasks(&cfg.tasks, &mut last_check, now_ts(), &log_path);
+            execute_due_tasks(&cfg.tasks, &mut last_check, config::now_ts(), &log_path);
         }
 
         unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, tfd, std::ptr::null_mut()); }
