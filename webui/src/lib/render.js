@@ -1,42 +1,34 @@
 /* ==========================================================
-   render — timeline DOM rendering & swipe-to-delete
+   render — timeline DOM rendering & long-press to delete
    ========================================================== */
 import { $ } from './utils.js';
 import { label } from './theme.js';
 
-const touchCtx = { el: null, startX: 0, currentX: 0, swiped: false };
+/* Long-press: hold 600ms on a job row to trigger delete */
+function initLongPress(row, idx) {
+  let timer = null;
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
 
-function initSwipe(el) {
-  let confirmed = false;
-  el.addEventListener('touchstart', (e) => {
-    touchCtx.el = el;
-    touchCtx.startX = e.touches[0].clientX;
-    touchCtx.currentX = touchCtx.startX;
-    touchCtx.swiped = el.classList.contains('swiped');
-    confirmed = false;
+  row.addEventListener('touchstart', () => {
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      if (window.openDelete) window.openDelete(idx);
+    }, 600);
   }, { passive: true });
-  el.addEventListener('touchmove', (e) => {
-    if (touchCtx.el !== el) return;
-    touchCtx.currentX = e.touches[0].clientX;
-    const dx = touchCtx.currentX - touchCtx.startX;
-    if (!touchCtx.swiped && dx < 0) el.style.transform = 'translateX(' + Math.max(dx, -80) + 'px)';
-    if (touchCtx.swiped && dx > 0) el.style.transform = 'translateX(' + Math.min(dx - 80, 0) + 'px)';
-  }, { passive: true });
-  el.addEventListener('touchend', () => {
-    if (touchCtx.el !== el) return;
-    const dx = touchCtx.currentX - touchCtx.startX;
-    if (!touchCtx.swiped && dx < -40) {
-      el.classList.add('swiped');
-      touchCtx.swiped = true;
-      confirmed = true;
-    } else if (touchCtx.swiped && dx > 20) {
-      if (confirmed) { confirmed = false; return; }
-      el.classList.remove('swiped');
-      touchCtx.swiped = false;
-    }
-    el.style.transform = '';
-    touchCtx.el = null;
-  }, { passive: true });
+  row.addEventListener('touchend', cancel, { passive: true });
+  row.addEventListener('touchmove', cancel, { passive: true });
+
+  /* Mouse fallback for desktop testing */
+  row.addEventListener('mousedown', () => {
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      if (window.openDelete) window.openDelete(idx);
+    }, 600);
+  });
+  row.addEventListener('mouseup', cancel);
+  row.addEventListener('mouseleave', cancel);
 }
 
 export function render(list) {
@@ -55,29 +47,22 @@ export function render(list) {
 
   el.innerHTML = list.map((s, idx) => {
     const typeBadge = s.isCron ? '<span class="cron-badge">CRON</span>' : '';
-    return '<div class="swipe-container">' +
-      '<div class="swipe-bg">Delete</div>' +
-      '<div class="swipe-content" data-idx="' + idx + '">' +
-        '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '">' +
-          '<div class="timeline-body" onclick="openEdit(' + idx + ')">' +
-            '<span class="timeline-time">' + s.time + typeBadge + '</span>' +
-            '<span class="timeline-label">' + label(s) + '</span>' +
-          '</div>' +
-          '<div class="timeline-actions">' +
-            '<md-switch' + (s.disabled ? '' : ' selected') + ' onclick="event.stopPropagation()" onchange="toggle(' + idx + ', this)"></md-switch>' +
-          '</div>' +
+    return '<div class="timeline-row' + (s.disabled ? ' disabled' : '') + '" data-idx="' + idx + '">' +
+        '<div class="timeline-body" onclick="openEdit(' + idx + ')">' +
+          '<span class="timeline-time">' + s.time + typeBadge + '</span>' +
+          '<span class="timeline-label">' + label(s) + '</span>' +
         '</div>' +
-      '</div>' +
-    '</div>';
+        '<div class="timeline-actions">' +
+          '<md-switch' + (s.disabled ? '' : ' selected') + ' onclick="event.stopPropagation()" onchange="toggle(' + idx + ', this)"></md-switch>' +
+        '</div>' +
+      '</div>';
   }).join('');
 
+  /* Attach long-press handlers after render */
   setTimeout(() => {
-    document.querySelectorAll('#schedule-list .swipe-content').forEach((e) => initSwipe(e));
-    document.querySelectorAll('#schedule-list .swipe-container').forEach((c, i) => {
-      const bg = c.querySelector('.swipe-bg');
-      if (bg) bg.addEventListener('click', () => {
-        if (window.openDelete) window.openDelete(i);
-      });
+    document.querySelectorAll('#schedule-list .timeline-row').forEach((row) => {
+      const idx = parseInt(row.dataset.idx, 10);
+      if (!isNaN(idx)) initLongPress(row, idx);
     });
   }, 50);
 }
