@@ -632,12 +632,13 @@ int main(int argc, char *argv[]) {
         if (nfds < 0) {
             if (errno == EINTR) {
                 log_message("Interrupted by signal");
-                /* Reset to "first-run" sentinel so execute_due_tasks
-                 * only checks the current minute (never past minutes).
-                 * Load fresh config first since config may have changed. */
-                last_task_check = 0;
-                load_cron_tasks();
-                execute_due_tasks(time(NULL));
+                /* Only execute if still running (SIGTERM also
+                 * triggers EINTR and sets running=0). */
+                if (running) {
+                    last_task_check = 0;
+                    load_cron_tasks();
+                    execute_due_tasks(time(NULL));
+                }
             } else {
                 log_message("epoll_wait error: %s", strerror(errno));
                 sleep(5);

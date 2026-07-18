@@ -4,7 +4,7 @@
    ========================================================== */
 import { $, toastMsg } from './utils.js';
 import { writeConfigFile } from './config.js';
-import { getEntries, pushEntry, removeEntry, updateEntry, findIndex } from './state.js';
+import { getEntries, pushEntry, removeEntry, updateEntry } from './state.js';
 import { load } from './ui.js';
 
 /* Validate time/cron format (matches C parser) */
@@ -19,10 +19,33 @@ function isValidTime(t) {
   return fields.every(f => /^[\d*,/\-*]+$/.test(f));
 }
 
-/* ---- Clear add form ---- */
-export function clearAddForm() {
-  $('new-time').value = '22:00';
-  $('new-cmd').value = '';
+/* ---- Add dialog ---- */
+export function openAddDialog() {
+  $('#new-time').value = '22:00';
+  $('#new-cmd').value = '';
+  $('#add-dialog').show();
+}
+
+export async function doAddFromDialog() {
+  const time = $('#new-time').value.trim();
+  const cmd  = $('#new-cmd').value.trim();
+  if (!time) return toastMsg('Enter time or cron expression');
+  if (!cmd)  return toastMsg('Enter a command');
+  if (!isValidTime(time)) return toastMsg('Invalid time or cron format');
+
+  const entries = getEntries();
+  for (let i = 0; i < entries.length; i++)
+    if (entries[i].time === time && entries[i].cmd === cmd)
+      return toastMsg('Already exists');
+
+  try {
+    const isCron = !/^\d{2}:\d{2}$/.test(time);
+    pushEntry({ time, cmd, disabled: false, isCron });
+    await writeConfigFile(getEntries());
+    toastMsg('Job added');
+    $('#add-dialog').close();
+    load();
+  } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
 /* ---- Toggle enable/disable (by stable ID) ---- */
@@ -56,8 +79,7 @@ export function openEdit(id) {
 /* Delete from within edit dialog */
 export async function deleteFromEdit() {
   if (!editingId) return;
-  // Show delete dialog instead of confirm()
-  $('#delete-dialog').setAttribute('data-context', 'edit');
+  deleteId = editingId;
   $('#delete-dialog').show();
 }
 
@@ -86,7 +108,6 @@ let deleteId = null;
 
 export function openDelete(id) {
   deleteId = id;
-  $('#delete-dialog').removeAttribute('data-context');
   $('#delete-dialog').show();
 }
 
@@ -101,27 +122,4 @@ export async function doDelFromDialog() {
     $('edit-dialog').close();
     load();
   } catch (x) { toastMsg('Error: ' + x.message); }
-}
-
-/* ---- Add job to schedule ---- */
-export async function add() {
-  const time = $('new-time').value.trim();
-  const cmd  = $('new-cmd').value.trim();
-  if (!time) return toastMsg('Enter time or cron expression');
-  if (!cmd)  return toastMsg('Enter a command');
-  if (!isValidTime(time)) return toastMsg('Invalid time or cron format');
-
-  const entries = getEntries();
-  for (let i = 0; i < entries.length; i++)
-    if (entries[i].time === time && entries[i].cmd === cmd)
-      return toastMsg('Already exists');
-
-  try {
-    const isCron = !/^\d{2}:\d{2}$/.test(time);
-    pushEntry({ time, cmd, disabled: false, isCron });
-    await writeConfigFile(getEntries());
-    toastMsg('Job added');
-    clearAddForm();
-    load();
-  } catch (e) { toastMsg('Error: ' + e.message); }
 }

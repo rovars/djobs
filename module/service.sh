@@ -21,20 +21,25 @@ update_status() {
   sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ $label ] /g" "$MODULE_PROP" 2>/dev/null
 }
 
-# Wait for boot — check both boot_completed and package manager
-while [ "$(getprop sys.boot_completed)" != "1" ] || [ -z "$(getprop dev.bootcomplete)" ]; do
+# Wait for boot with timeout (120s max)
+waited=0
+while [ "$waited" -lt 12 ]; do
+  boot_ok=1
+  [ "$(getprop sys.boot_completed)" = "1" ] || boot_ok=0
+  [ -z "$(getprop dev.bootcomplete)" ] || boot_ok=0
+  # Also check encryption state
+  ds=$(getprop vold.decrypt)
+  [ "$ds" = "trigger_encryption" ] && boot_ok=0
+  [ "$ds" = "trigger_default_encryption" ] && boot_ok=0
+  [ "$boot_ok" = "1" ] && break
   sleep 10
-done
-# Additional wait for data decryption on encrypted devices
-while [ "$(getprop vold.decrypt)" = "trigger_encryption" ] || [ "$(getprop vold.decrypt)" = "trigger_default_encryption" ]; do
-  sleep 10
+  waited=$((waited + 1))
 done
 sleep 30
 
 # Start scheduler with crash recovery
 while [ -f "$SCHEDULER" ]; do
   $SCHEDULER
-  local exit_code=$?
   update_status "⚠️ Crashed"
   sleep 10
   # Don't restart if module was removed

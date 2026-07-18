@@ -31,10 +31,9 @@ is_running() {
 kill_children() {
   local ppid="$1"
   [ -z "$ppid" ] && return
-  # Kill direct children first
-  kill -0 "$ppid" 2>/dev/null && kill "$ppid" 2>/dev/null
-  # Kill grand-children (process group)
+  # Children first, then parent (reverse order)
   pkill -P "$ppid" 2>/dev/null || true
+  kill -0 "$ppid" 2>/dev/null && kill "$ppid" 2>/dev/null
 }
 
 case "${1:-status}" in

@@ -171,6 +171,17 @@ body {
   opacity: .6;
 }
 
+/* ---- FAB ---- */
+md-fab {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: max(16px, calc(50% - 240px + 16px));
+  --md-fab-container-color: var(--accent);
+  --md-fab-icon-color: #1e293b;
+  --md-sys-color-primary-container: var(--accent);
+  --md-sys-color-on-primary-container: #1e293b;
+}
+
 /* ---- Form Cards ---- */
 .form-card {
   background: var(--card);
