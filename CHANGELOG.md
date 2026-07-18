@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.4
+- Refactor: wakeup_inspector merged into scheduler --diagnose flag
+- Refactor: service.sh deduplicated to 6-line boot wrapper (exec djobs.sh)
+- Fix: APatch/KernelSU/Magisk multi-framework PATH in control scripts
+- Fix: stale SERVICE_DIR variable removed from installer
+- Build: dead Makefile and wakeup_inspector build targets removed
+
 ## v3.3
 - Fix: dialogs not opening (CSS selector prefix bug in $())
 - Fix: FAB replaced with wide text-only button

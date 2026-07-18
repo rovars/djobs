@@ -1,5 +1,5 @@
 #!/bin/sh
-# DailyJobs v3.0 installer — KernelSU / Magisk / APatch
+# DailyJobs v3.4 installer — KernelSU / Magisk / APatch
 
 # ---- Detect CPU architecture ----
 ARCH=$(uname -m)

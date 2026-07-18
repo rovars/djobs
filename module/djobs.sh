@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# DailyJobs v3.1 — control script
+# DailyJobs v3.4 — control script
 # Manages the scheduler daemon (start/stop/restart/status)
 
 PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH
