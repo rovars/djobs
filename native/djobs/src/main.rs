@@ -138,17 +138,7 @@ fn main() {
         Commands::Start => start_daemon(),
         Commands::Stop => stop_daemon(),
         Commands::Restart => {
-            let old_pid = read_pid();
-            if let Some(pid) = old_pid {
-                if is_running() {
-                    let _ = Command::new("sh")
-                        .args(["-c", &format!("pkill -P {pid} 2>/dev/null || true")])
-                        .status();
-                    let _ = Command::new("kill").arg(pid.to_string()).status();
-                    wait_for_death(pid);
-                }
-            }
-            let _ = fs::remove_file(PID_FILE);
+            stop_daemon();
             start_daemon();
         }
         Commands::Status => {
