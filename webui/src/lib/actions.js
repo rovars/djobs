@@ -67,7 +67,8 @@ export function openEdit(idx) {
   const e = getEntries()[idx];
   if (!e) return;
   editIdentity = { time: e.time, cmd: e.cmd };
-  $('edit-line').value = e.time + ' ' + e.cmd;
+  $('edit-time').value = e.time;
+  $('edit-cmd').value = e.cmd;
   $('edit-dialog').show();
 }
 
@@ -87,16 +88,17 @@ export async function deleteFromEdit() {
 }
 
 export async function saveEditFromDialog() {
-  const raw = $('edit-line').value;
-  const parsed = parseLine(raw);
-  if (!parsed) return toastMsg('Invalid format — use: HH:MM command');
+  const newTime = $('edit-time').value.trim();
+  const newCmd  = $('edit-cmd').value.trim();
+  if (!newTime) return toastMsg('Enter time or cron expression');
+  if (!newCmd)  return toastMsg('Enter a command');
   try {
     const idx = findEntryIndex(editIdentity.time, editIdentity.cmd);
     if (idx < 0) return toastMsg('Entry not found (was it modified?)');
     const entries = getEntries();
-    entries[idx].time = parsed.time;
-    entries[idx].cmd = parsed.cmd;
-    entries[idx].isCron = parsed.isCron;
+    entries[idx].time = newTime;
+    entries[idx].cmd = newCmd;
+    entries[idx].isCron = !/^\d{2}:\d{2}$/.test(newTime);
     await writeConfigFile(entries);
     toastMsg('Saved');
     $('edit-dialog').close();

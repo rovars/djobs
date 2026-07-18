@@ -47,7 +47,8 @@
 <md-dialog id="edit-dialog">
   <div slot="headline" id="edit-title">Edit job</div>
   <form slot="content" id="edit-form" method="dialog">
-    <md-outlined-text-field label="Job" id="edit-line" class="full" placeholder='22:30 svc data disable'></md-outlined-text-field>
+    <md-outlined-text-field label="Time" id="edit-time" class="full" placeholder='22:00 or step/15 9-17 * * 1-5'></md-outlined-text-field>
+    <md-outlined-text-field label="Command" id="edit-cmd" class="full" style="margin-top:12px"></md-outlined-text-field>
   </form>
   <div slot="actions">
     <md-text-button style="color:#ef4444" onclick="deleteFromEdit()">Delete</md-text-button>
