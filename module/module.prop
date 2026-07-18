@@ -1,7 +1,7 @@
 id=dailyjobs
 name=DailyJobs
-version=v3.0
-versionCode=6
+version=v3.1
+versionCode=7
 author=Dee
 description=Cron task scheduler with WebUI — C-based, RTC wakealarm, deep sleep safe
 updateJson=https://raw.githubusercontent.com/rovars/djobs/master/update.json
