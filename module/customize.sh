@@ -62,6 +62,11 @@ else
   abort "Architecture not supported"
 fi
 
+# Control script
+cp "$MODPATH/djobs.sh" /data/adb/dailyjobs/djobs.sh
+chmod 755 /data/adb/dailyjobs/djobs.sh
+ui_print "- Installed control script"
+
 # Boot service
 cp "$MODPATH/service.sh" "$SERVICE_DIR/dailyjobs.sh"
 chmod 755 "$SERVICE_DIR/dailyjobs.sh"
