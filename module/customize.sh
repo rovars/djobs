@@ -58,8 +58,10 @@ fi
 
 # Deploy correct architecture binaries
 if [ -f "$MODPATH/bin/$BINARY" ]; then
-  cp "$MODPATH/bin/$BINARY" /data/adb/dailyjobs/scheduler
-  chmod 755 /data/adb/dailyjobs/scheduler
+  cp "$MODPATH/bin/$BINARY" /data/adb/dailyjobs/bin/scheduler
+  chmod 755 /data/adb/dailyjobs/bin/scheduler
+  # Symlink to root for backward compat
+  ln -sf bin/scheduler /data/adb/dailyjobs/scheduler
   ui_print "- Deployed $BINARY"
 else
   ui_print "! Scheduler binary not found: bin/$BINARY"
