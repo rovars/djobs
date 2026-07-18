@@ -366,7 +366,6 @@ static void run_command(const char *cmd) {
         return;
     }
     if (pid == 0) {
-        setsid();
         int fd = open(RUN_LOG, O_WRONLY | O_APPEND | O_CREAT, 0644);
         if (fd >= 0) {
             dup2(fd, STDOUT_FILENO);
