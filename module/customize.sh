@@ -53,12 +53,18 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
 fi
 
 # Deploy correct architecture binary
-if [ -f "$MODPATH/$BINARY" ]; then
-  cp "$MODPATH/$BINARY" /data/adb/dailyjobs/scheduler
+if [ -f "$MODPATH/bin/$BINARY" ]; then
+  mkdir -p /data/adb/dailyjobs/bin
+  cp "$MODPATH/bin/scheduler_arm64" /data/adb/dailyjobs/bin/scheduler_arm64 2>/dev/null
+  cp "$MODPATH/bin/scheduler_arm" /data/adb/dailyjobs/bin/scheduler_arm 2>/dev/null
+  cp "$MODPATH/bin/$BINARY" /data/adb/dailyjobs/scheduler
   chmod 755 /data/adb/dailyjobs/scheduler
+  # Deploy wakeup_inspector
+  cp "$MODPATH/bin/wakeup_inspector_arm64" /data/adb/dailyjobs/bin/wakeup_inspector_arm64 2>/dev/null
+  cp "$MODPATH/bin/wakeup_inspector_arm" /data/adb/dailyjobs/bin/wakeup_inspector_arm 2>/dev/null
   ui_print "- Deployed $BINARY"
 else
-  ui_print "! Binary not found: $BINARY"
+  ui_print "! Binary not found: bin/$BINARY"
   abort "Architecture not supported"
 fi
 
