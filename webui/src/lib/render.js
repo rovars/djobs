@@ -11,9 +11,9 @@ export function render(list) {
   if (!list.length) {
     el.innerHTML =
       '<div class="timeline-empty">' +
-        '<div class="empty-icon material-symbols-outlined">alarm</div>' +
+        '<div class="empty-icon">⏰</div>' +
         '<p>No jobs scheduled</p>' +
-        '<span class="empty-hint">Add one below</span>' +
+        '<span class="empty-hint">Tap Add job to get started</span>' +
       '</div>';
     return;
   }

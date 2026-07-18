@@ -20,7 +20,7 @@ export async function load() {
     if (el) {
       el.innerHTML =
         '<div class="timeline-empty">' +
-          '<div class="empty-icon material-symbols-outlined">error_outline</div>' +
+          '<div class="empty-icon">⚠️</div>' +
           '<p>Failed to load config</p>' +
           '<span class="empty-hint">' + escHtml(e.message) + '</span>' +
         '</div>';

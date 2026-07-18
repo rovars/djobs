@@ -19,18 +19,20 @@
   <section>
     <div class="timeline" id="schedule-list">
       <div class="timeline-empty">
-        <div class="empty-icon material-symbols-outlined">alarm</div>
+        <div class="empty-icon">⏰</div>
         <p>No jobs scheduled</p>
-        <span class="empty-hint">Tap + to add one</span>
+        <span class="empty-hint">Tap Add job to get started</span>
       </div>
     </div>
   </section>
 </div>
 
-<!-- FAB -->
-<md-fab id="add-fab" onclick="openAddDialog()">
-  <span slot="icon" class="material-symbols-outlined">add</span>
-</md-fab>
+<!-- Add button (full width) -->
+<div class="add-button-wrap">
+  <md-filled-button class="full-btn" onclick="openAddDialog()">
+    Add job
+  </md-filled-button>
+</div>
 
 <!-- Add dialog -->
 <md-dialog id="add-dialog">

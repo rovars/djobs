@@ -21,14 +21,14 @@ function isValidTime(t) {
 
 /* ---- Add dialog ---- */
 export function openAddDialog() {
-  $('#new-time').value = '22:00';
-  $('#new-cmd').value = '';
-  $('#add-dialog').show();
+  $('new-time').value = '22:00';
+  $('new-cmd').value = '';
+  $('add-dialog').show();
 }
 
 export async function doAddFromDialog() {
-  const time = $('#new-time').value.trim();
-  const cmd  = $('#new-cmd').value.trim();
+  const time = $('new-time').value.trim();
+  const cmd  = $('new-cmd').value.trim();
   if (!time) return toastMsg('Enter time or cron expression');
   if (!cmd)  return toastMsg('Enter a command');
   if (!isValidTime(time)) return toastMsg('Invalid time or cron format');
@@ -43,7 +43,7 @@ export async function doAddFromDialog() {
     pushEntry({ time, cmd, disabled: false, isCron });
     await writeConfigFile(getEntries());
     toastMsg('Job added');
-    $('#add-dialog').close();
+    $('add-dialog').close();
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
@@ -80,7 +80,7 @@ export function openEdit(id) {
 export async function deleteFromEdit() {
   if (!editingId) return;
   deleteId = editingId;
-  $('#delete-dialog').show();
+  $('delete-dialog').show();
 }
 
 export async function saveEditFromDialog() {
@@ -108,7 +108,7 @@ let deleteId = null;
 
 export function openDelete(id) {
   deleteId = id;
-  $('#delete-dialog').show();
+  $('delete-dialog').show();
 }
 
 export async function doDelFromDialog() {
@@ -118,7 +118,7 @@ export async function doDelFromDialog() {
     await writeConfigFile(getEntries());
     toastMsg('Deleted');
     deleteId = null;
-    $('#delete-dialog').close();
+    $('delete-dialog').close();
     $('edit-dialog').close();
     load();
   } catch (x) { toastMsg('Error: ' + x.message); }

@@ -1,6 +1,6 @@
 /* ===================================================
-   DailyJobs — redesigned UI
-   Gold accent · Material 3
+   DailyJobs — dark theme UI
+   Slate accent · Material 3
    =================================================== */
 
 /* ---- Reset & Base ---- */
@@ -13,8 +13,8 @@ html, body { background: var(--bg); margin: 0; padding: 0; }
   --card-border: #1e2640;
   --text: #e2e8f0;
   --muted: #718096;
-  --accent: #eab308;
-  --accent-soft: rgba(234, 179, 8, 0.1);
+  --accent: #334155;
+  --accent-soft: rgba(51, 65, 85, 0.15);
   --radius: 14px;
   --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
@@ -171,15 +171,13 @@ body {
   opacity: .6;
 }
 
-/* ---- FAB ---- */
-md-fab {
-  position: fixed;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  right: max(16px, calc(50% - 240px + 16px));
-  --md-fab-container-color: var(--accent);
-  --md-fab-icon-color: #1e293b;
-  --md-sys-color-primary-container: var(--accent);
-  --md-sys-color-on-primary-container: #1e293b;
+/* ---- Add Button ---- */
+.add-button-wrap {
+  margin-bottom: 24px;
+}
+.add-button-wrap md-filled-button {
+  width: 100%;
+  --md-filled-button-container-height: 48px;
 }
 
 /* ---- Form Cards ---- */
@@ -204,7 +202,7 @@ md-filled-button, md-outlined-button {
 md-filled-button {
   white-space: normal;
   --md-filled-button-container-color: var(--accent);
-  --md-filled-button-label-text-color: #1e293b;
+  --md-filled-button-label-text-color: #e2e8f0;
   --md-sys-color-primary: var(--accent);
 }
 md-outlined-button {
@@ -251,22 +249,6 @@ md-dialog {
   line-height: 1.5;
 }
 
-/* ---- Material Icons ---- */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
 /* ---- Toast ---- */
 .toast {
   position: fixed;
@@ -299,8 +281,8 @@ md-dialog {
     --card-border: #e2e8f0;
     --text: #1e293b;
     --muted: #64748b;
-    --accent: #ca8a04;
-    --accent-soft: rgba(202, 138, 4, 0.08);
+    --accent: #475569;
+    --accent-soft: rgba(71, 85, 105, 0.12);
   }
   .app-title,
   .timeline-time { color: #0f172a; }
