@@ -335,6 +335,24 @@ md-switch {
   --md-switch-disabled-unselected-track-color: rgba(255, 255, 255, 0.04);
 }
 
+/* Delete button in timeline */
+.del-btn {
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity .2s;
+  padding: 4px;
+}
+.timeline-row:hover .del-btn,
+.timeline-row:focus-within .del-btn {
+  opacity: .6;
+}
+.del-btn:hover {
+  opacity: 1 !important;
+  color: #ef4444;
+}
+
 /* ---- Select & Menu ---- */
 md-outlined-select {
   --md-outlined-text-field-container-color: var(--bg);

@@ -26,6 +26,22 @@ function parseLine(line) {
   return null;
 }
 
+/* Close all open dialogs (called on re-render to prevent stale indices) */
+function closeDialogs() {
+  ['edit-dialog', 'delete-dialog'].forEach(id => {
+    const d = $(id);
+    if (d && d.open) d.close();
+  });
+}
+
+/* Find entry index by comparing time+cmd (identity, not position) */
+function findEntryIndex(time, cmd) {
+  const entries = getEntries();
+  for (let i = 0; i < entries.length; i++)
+    if (entries[i].time === time && entries[i].cmd === cmd) return i;
+  return -1;
+}
+
 /* ---- Clear add form ---- */
 export function clearAddForm() {
   $('new-line').value = '';
@@ -38,17 +54,18 @@ export async function toggle(idx, sw) {
     entries[idx].disabled = !sw.selected;
     await writeConfigFile(entries);
     toastMsg('Toggled');
+    closeDialogs();
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
 /* ---- Edit dialog ---- */
-let editIdx = -1;
+let editIdentity = null;  // {time, cmd} — not index
 
 export function openEdit(idx) {
-  editIdx = idx;
   const e = getEntries()[idx];
   if (!e) return;
+  editIdentity = { time: e.time, cmd: e.cmd };
   const prefix = e.disabled ? '# ' : '';
   $('edit-line').value = prefix + e.time + ' ' + e.cmd;
   $('edit-disabled').selected = !e.disabled;
@@ -60,11 +77,13 @@ export async function saveEditFromDialog() {
   const parsed = parseLine(raw);
   if (!parsed) return toastMsg('Invalid format — use: HH:MM command');
   try {
+    const idx = findEntryIndex(editIdentity.time, editIdentity.cmd);
+    if (idx < 0) return toastMsg('Entry not found (was it modified?)');
     const entries = getEntries();
-    entries[editIdx].time = parsed.time;
-    entries[editIdx].cmd = parsed.cmd;
-    entries[editIdx].disabled = parsed.disabled;
-    entries[editIdx].isCron = parsed.isCron;
+    entries[idx].time = parsed.time;
+    entries[idx].cmd = parsed.cmd;
+    entries[idx].disabled = parsed.disabled;
+    entries[idx].isCron = parsed.isCron;
     await writeConfigFile(entries);
     toastMsg('Saved');
     $('edit-dialog').close();
@@ -73,20 +92,25 @@ export async function saveEditFromDialog() {
 }
 
 /* ---- Delete dialog ---- */
-let delIdx = -1;
+let deleteIdentity = null;  // {time, cmd} — not index
 
 export function openDelete(idx) {
-  delIdx = idx;
-  if (!getEntries()[idx]) return;
+  const e = getEntries()[idx];
+  if (!e) return;
+  deleteIdentity = { time: e.time, cmd: e.cmd };
   $('delete-dialog').show();
 }
 
 export async function doDelFromDialog() {
+  if (!deleteIdentity) return;
   try {
+    const idx = findEntryIndex(deleteIdentity.time, deleteIdentity.cmd);
+    if (idx < 0) return toastMsg('Entry not found (was it modified?)');
     const entries = getEntries();
-    entries.splice(delIdx, 1);
+    entries.splice(idx, 1);
     await writeConfigFile(entries);
     toastMsg('Deleted');
+    deleteIdentity = null;
     $('delete-dialog').close();
     load();
   } catch (x) { toastMsg('Error: ' + x.message); }
