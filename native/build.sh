@@ -1,38 +1,51 @@
 #!/bin/bash
-# build.sh — Build C binaries for DailyJobs module
+# build.sh — Build Rust binaries for DailyJobs module
 # Usage: ./build.sh [arm|arm64|x86_64|all]
 
 set -e
 cd "$(dirname "$0")"
 
-ZIG="${ZIG:-zig}"
-STRIP="${STRIP:-sstrip}"
-CFLAGS="-O2 -std=gnu11 -Wall -Wextra"
+CARGO="${CARGO:-cargo}"
+API_LEVEL="${API_LEVEL:-29}"
 
-if [ -f "$PWD/zig" ]; then ZIG="$PWD/zig"; fi
-if [ -f "$PWD/sstrip" ]; then STRIP="$PWD/sstrip"; fi
+build_daemon() {
+    local target="$1"
+    local outname="$2"
+    echo "[build] djobsd for $target..."
+    cd djobsd
+    $CARGO ndk -t "$target" -p "$API_LEVEL" build --release
+    cd ..
+    cp "djobsd/target/$target/release/djobsd" "$outname"
+}
 
-echo "[build] Using: $($ZIG version)"
+build_cli() {
+    local target="$1"
+    local outname="$2"
+    echo "[build] djobs for $target..."
+    cd djobs
+    $CARGO ndk -t "$target" -p "$API_LEVEL" build --release
+    cd ..
+    cp "djobs/target/$target/release/djobs" "$outname"
+}
 
 build_native() {
-    echo "[build] x86_64..."
-    $ZIG cc $CFLAGS scheduler.c -o scheduler
+    echo "[build] x86_64 (native)..."
+    cd djobsd && $CARGO build --release && cd ..
+    cp djobsd/target/release/djobsd scheduler
+    cd djobs && $CARGO build --release && cd ..
+    cp djobs/target/release/djobs djobs_cli
 }
 
 build_arm64() {
-    echo "[build] ARM64 (aarch64-linux-musl)..."
-    $ZIG cc $CFLAGS -target aarch64-linux-musl -static scheduler.c -o scheduler_arm64
-    if command -v "$STRIP" &>/dev/null; then
-        $STRIP scheduler_arm64 2>/dev/null || true
-    fi
+    echo "[build] ARM64 (aarch64-linux-android)..."
+    build_daemon "arm64" "scheduler_arm64"
+    build_cli "arm64" "djobs_arm64"
 }
 
 build_arm() {
-    echo "[build] ARM (arm-linux-musleabihf)..."
-    $ZIG cc $CFLAGS -target arm-linux-musleabihf -static scheduler.c -o scheduler_arm
-    if command -v "$STRIP" &>/dev/null; then
-        $STRIP scheduler_arm 2>/dev/null || true
-    fi
+    echo "[build] ARM (armv7-linux-androideabi)..."
+    build_daemon "arm" "scheduler_arm"
+    build_cli "arm" "djobs_arm"
 }
 
 case "${1:-arm64}" in
@@ -44,4 +57,4 @@ case "${1:-arm64}" in
 esac
 
 echo "[build] Done"
-ls -lh scheduler* 2>/dev/null
+ls -lh scheduler* djobs_cli 2>/dev/null || true
