@@ -6,7 +6,7 @@ import { styles as typescaleStyles } from '@material/web/typography/md-typescale
 import './style.css';
 
 import { load } from './lib/ui.js';
-import { add, toggle, openEdit, saveEditFromDialog, openDelete, doDelFromDialog } from './lib/actions.js';
+import { add, toggle, openEdit, saveEditFromDialog, openDelete, doDelFromDialog, clearAddForm } from './lib/actions.js';
 
 document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
 
@@ -16,9 +16,6 @@ window.openEdit           = openEdit;
 window.saveEditFromDialog = saveEditFromDialog;
 window.openDelete         = openDelete;
 window.doDelFromDialog    = doDelFromDialog;
-window.clearAddForm       = () => {
-  document.getElementById('new-time').value = '';
-  document.getElementById('new-cmd').value = '';
-};
+window.clearAddForm       = clearAddForm;
 
 load();

@@ -41,7 +41,7 @@ function initSwipe(el) {
 
 export function render(list) {
   const el = $('schedule-list');
-  $('job-count').textContent = list.length.toString();
+  if (!el) return;
 
   if (!list.length) {
     el.innerHTML =

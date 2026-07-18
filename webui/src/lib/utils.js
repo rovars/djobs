@@ -30,21 +30,11 @@ export function utf8ToBase64(str) {
   return btoa(bin);
 }
 
-/** Validate a script name (alphanumeric, dots, hyphens, underscores) */
-export function sanitizeName(name) {
-  return /^[A-Za-z0-9._-]+$/.test(name);
-}
-
 /** Run a shell command; throws on non-zero exit */
 export async function run(cmd) {
   const r = await exec(cmd);
   if (r.errno !== 0) throw new Error((r.stderr || '').trim() || 'command failed');
   return r;
-}
-
-/** Run a shell command that is allowed to fail (returns empty result) */
-export async function tryRun(cmd) {
-  try { return await run(cmd); } catch { return { stdout: '', stderr: '', errno: -1 }; }
 }
 
 /** Minimal HTML entity escaping (safe for innerHTML) */

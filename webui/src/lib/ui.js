@@ -25,6 +25,7 @@ export async function load() {
           '<span class="empty-hint">' + escHtml(e.message) + '</span>' +
         '</div>';
     }
-    toastMsg('Error: ' + e.message);
+    // Use console.error instead of toastMsg to avoid cascading errors
+    console.error('DailyJobs:', e.message);
   }
 }

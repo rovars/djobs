@@ -6,6 +6,12 @@ import { writeConfigFile } from './config.js';
 import { getEntries } from './state.js';
 import { load } from './ui.js';
 
+/* ---- Clear add form ---- */
+export function clearAddForm() {
+  $('new-time').value = '22:00';
+  $('new-cmd').value = '';
+}
+
 /* ---- Toggle enable/disable ---- */
 export async function toggle(idx, sw) {
   try {
@@ -31,7 +37,7 @@ export function openEdit(idx) {
 }
 
 export async function saveEditFromDialog() {
-  const newTime = $('edit-time').value;
+  const newTime = $('edit-time').value.trim();
   const newCmd  = $('edit-cmd').value.trim();
   const newDisabled = !$('edit-disabled').selected;
   if (!newTime) return toastMsg('Enter time or cron expression');
@@ -71,7 +77,7 @@ export async function doDelFromDialog() {
 
 /* ---- Add job to schedule ---- */
 export async function add() {
-  const time = $('new-time').value;
+  const time = $('new-time').value.trim();
   const cmd  = $('new-cmd').value.trim();
   if (!time) return toastMsg('Enter time or cron expression');
   if (!cmd)  return toastMsg('Enter a command');
@@ -84,11 +90,7 @@ export async function add() {
     entries.push({ time, cmd, disabled: false, isCron });
     await writeConfigFile(entries);
     toastMsg('Job added');
+    clearAddForm();
     load();
   } catch (e) { toastMsg('Error: ' + e.message); }
-}
-
-export function clearAddForm() {
-  $('new-time').value = '22:00';
-  $('new-cmd').value = '';
 }
