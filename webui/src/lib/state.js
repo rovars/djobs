@@ -10,8 +10,11 @@ export function getEntries() {
 }
 
 export function setEntries(entries) {
-  // Assign stable IDs on load if missing
-  currentEntries = entries.map(e => ({ ...e, id: e.id || nextId++ }));
+  // Preserve IDs by content match so DOM data-id stays valid
+  currentEntries = entries.map(e => {
+    const prev = currentEntries.find(c => c.time === e.time && c.cmd === e.cmd);
+    return { ...e, id: (prev && prev.id) || e.id || nextId++ };
+  });
   nextId = currentEntries.reduce((m, e) => Math.max(m, e.id || 0), 0) + 1;
 }
 
