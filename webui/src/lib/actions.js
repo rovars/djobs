@@ -5,7 +5,7 @@
 import { $, toastMsg } from './utils.js';
 import { writeConfigFile } from './config.js';
 import { getEntries, pushEntry, removeEntry, updateEntry } from './state.js';
-import { load } from './ui.js';
+import { render } from './render.js';
 
 /* Validate time/cron format (matches C parser) */
 function isValidTime(t) {
@@ -44,7 +44,7 @@ export async function doAddFromDialog() {
     await writeConfigFile(getEntries());
     toastMsg('Job added');
     $('add-dialog').close();
-    load();
+    render(getEntries());
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
@@ -55,7 +55,7 @@ export async function toggle(id, sw) {
     if (!e) return toastMsg('Entry not found');
     await writeConfigFile(getEntries());
     toastMsg(e.disabled ? 'Disabled' : 'Enabled');
-    load();
+    render(getEntries());
   } catch (e) { toastMsg('Error: ' + e.message); }
 }
 
@@ -99,7 +99,7 @@ export async function saveEditFromDialog() {
     await writeConfigFile(getEntries());
     toastMsg('Saved');
     $('edit-dialog').close();
-    load();
+    render(getEntries());
   } catch (x) { toastMsg('Error: ' + x.message); }
 }
 
@@ -120,6 +120,6 @@ export async function doDelFromDialog() {
     deleteId = null;
     $('delete-dialog').close();
     $('edit-dialog').close();
-    load();
+    render(getEntries());
   } catch (x) { toastMsg('Error: ' + x.message); }
 }
