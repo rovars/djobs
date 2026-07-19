@@ -1,9 +1,6 @@
 native/zig*
 native/ELFkickers*
 native/**/target/
-native/djobsd
-native/djobsd_arm
-native/djobsd_arm64
 native/wakeup_inspector*
 native/djobsd/Cargo.lock
 zig-x86_64-linux-0.14.1/

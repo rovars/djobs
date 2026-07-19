@@ -6,6 +6,8 @@ set -e
 cd "$(dirname "$0")"
 
 CARGO="${CARGO:-cargo}"
+OUTDIR="$(realpath "$(dirname "$0")/../module/djobs_bin")"
+mkdir -p "$OUTDIR"
 
 build_android() {
     local crate="$1"
@@ -13,13 +15,13 @@ build_android() {
     local outname="$3"
     echo "[build] $crate for $target..."
     (cd "$crate" && $CARGO build --target "$target" --release) || return 1
-    cp "$crate/target/$target/release/$crate" "$outname"
+    cp "$crate/target/$target/release/$crate" "$OUTDIR/$outname"
 }
 
 build_native() {
     echo "[build] x86_64 (native)..."
     (cd djobsd && $CARGO build --release) || return 1
-    cp djobsd/target/release/djobsd djobsd
+    cp djobsd/target/release/djobsd "$OUTDIR/djobsd_x86_64"
 }
 
 build_arm64() {
@@ -41,4 +43,4 @@ case "${1:-arm64}" in
 esac
 
 echo "[build] Done"
-ls -lh djobsd* djobs* 2>/dev/null || true
+ls -lh "$OUTDIR"

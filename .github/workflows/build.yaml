@@ -34,9 +34,6 @@ jobs:
         cd native
         chmod +x build.sh
         ./build.sh all
-        mkdir -p ../module/djobs_bin
-        cp djobsd_arm64 ../module/djobs_bin/djobsd_arm64
-        cp djobsd_arm ../module/djobs_bin/djobsd_arm
 
     - name: Build webui
       run: |
