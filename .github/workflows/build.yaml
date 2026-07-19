@@ -35,8 +35,8 @@ jobs:
         chmod +x build.sh
         ./build.sh all
         mkdir -p ../module/bin
-        cp scheduler_arm64 ../module/bin/scheduler_arm64
-        cp scheduler_arm ../module/bin/scheduler_arm
+        cp djobsd_arm64 ../module/bin/djobsd_arm64
+        cp djobsd_arm ../module/bin/djobsd_arm
         cp djobs_arm64 ../module/bin/djobs_arm64
         cp djobs_arm ../module/bin/djobs_arm
 

@@ -32,12 +32,12 @@ if [ ! -f /data/adb/dailyjobs/config.txt ]; then
 fi
 
 # Deploy daemon binary
-if [ -f "$MODPATH/bin/scheduler_$ARCH_SUFFIX" ]; then
-  cp "$MODPATH/bin/scheduler_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobsd
+if [ -f "$MODPATH/bin/djobsd_$ARCH_SUFFIX" ]; then
+  cp "$MODPATH/bin/djobsd_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobsd
   chmod 755 /data/adb/dailyjobs/bin/djobsd
   ui_print "- Deployed djobsd ($ARCH_SUFFIX)"
 else
-  ui_print "! Daemon binary not found: bin/scheduler_$ARCH_SUFFIX"
+  ui_print "! Daemon binary not found: bin/djobsd_$ARCH_SUFFIX"
   abort "Architecture not supported"
 fi
 
@@ -53,7 +53,7 @@ ui_print "- Boot service: module/service.sh (auto)"
 
 # Symlink for module manager
 rm -rf "$MODPATH/dailyjobs"
-ln -s /data/adb/dailyjobs/bin "$MODPATH/dailyjobs"
+ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
 
 ui_print "- [DailyJobs] Installation complete!"
 ui_print "- Reboot or run: /data/adb/dailyjobs/bin/djobs start"

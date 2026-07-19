@@ -1,10 +1,11 @@
 native/zig*
 native/ELFkickers*
 native/**/target/
+native/djobs
 native/djobs_cli
-native/scheduler
-native/scheduler_arm
-native/scheduler_arm64
+native/djobsd
+native/djobsd_arm
+native/djobsd_arm64
 native/wakeup_inspector*
 native/djobs/Cargo.lock
 native/djobsd/Cargo.lock
@@ -13,7 +14,7 @@ ELFkickers-3.2/
 *.zip
 node_modules/
 webui/dist/
-module/scheduler
-module/scheduler_arm
-module/scheduler_arm64
+module/djobsd
+module/djobsd_arm
+module/djobsd_arm64
 module/webroot/
