@@ -1,8 +1,14 @@
-import { exec } from 'kernelsu-alt';
-
 /* ─── Constants ─── */
 const CFG = '/data/adb/dailyjobs/config.txt';
 const DJOBS = '/data/adb/dailyjobs/djobs.service';
+
+/* ─── Mock preview data for browser dev ─── */
+const MOCK_ENTRIES = [
+  { time: '22:00', cmd: 'svc data disable', disabled: false, isCron: false },
+  { time: '07:00', cmd: 'svc data enable', disabled: false, isCron: false },
+  { time: '30 9 * * 1-5', cmd: 'cmd connectivity airplane-mode enable', disabled: true, isCron: true },
+  { time: '23:30', cmd: 'svc wifi disable && svc bluetooth disable', disabled: false, isCron: false },
+];
 
 /* ─── DOM Helpers ─── */
 const $ = id => document.getElementById(id);
@@ -18,8 +24,16 @@ function toast(msg) {
 }
 
 /* ─── Shell ─── */
+let _exec;
+try {
+  _exec = (await import('kernelsu-alt')).exec;
+} catch {
+  // Browser dev — mock kernelsu-alt exec
+  _exec = async () => ({ errno: 1, stdout: '', stderr: 'mock' });
+}
+
 async function run(cmd) {
-  const r = await exec(cmd);
+  const r = await _exec(cmd);
   if (r.errno !== 0) throw new Error((r.stderr || '').trim() || 'command failed');
   return r;
 }
@@ -66,27 +80,21 @@ async function writeConfig(entries) {
   const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(content)));
   await run("printf '%s' '" + b64.replace(/'/g, "'\\''") + "' | base64 -d > '" + tmp.replace(/'/g, "'\\''") + "'");
   await run("mv -f '" + tmp.replace(/'/g, "'\\''") + "' '" + CFG.replace(/'/g, "'\\''") + "'");
-  // Signal daemon to reload config
-  try {
-    const st = await run(DJOBS + " status");
-    if (st.stdout.includes('Running')) {
-      await run(DJOBS + " restart");
-    }
-  } catch (_) {}
 }
 
 /* ─── State ─── */
 let entries = [];
 let editingIdx = -1;  // -1 = add, >=0 = edit
+let IS_MOCK = false;
 
 function render() {
   renderJobs();
-  renderStatusPending();
   $('job-count').textContent = entries.length;
 }
 
 /* ─── Service Status ─── */
 async function checkStatus() {
+  if (IS_MOCK) return;
   try {
     const r = await run(DJOBS + " status");
     const running = r.stdout.includes('Running');
@@ -129,6 +137,20 @@ async function stopDaemon() {
     toast('Daemon stopped');
   } catch (e) { toast('Stop failed: ' + e.message); }
   $('btn-stop').disabled = false;
+}
+
+/* ─── Reload ─── */
+async function reloadDaemon() {
+  if (IS_MOCK) return;
+  $('btn-refresh').disabled = true;
+  try {
+    await run(DJOBS + " restart");
+    entries = await readConfig();
+    render();
+    await checkStatus();
+    toast('Daemon restarted');
+  } catch (e) { toast('Reload failed: ' + e.message); }
+  $('btn-refresh').disabled = false;
 }
 
 /* ─── Render Jobs ─── */
@@ -251,31 +273,35 @@ async function toggle(idx, checked) {
 
 /* ─── Init ─── */
 async function init() {
-  // Load config
+  // Load config — fallback to mock for browser dev
   try {
     entries = await readConfig();
   } catch (_) {
-    toast('Cannot read config');
+    entries = MOCK_ENTRIES;
+    IS_MOCK = true;
+    renderStatus(true, '9999');
   }
   render();
 
-  // Check status (don't block render)
-  checkStatus();
-
-  // Bind events
+  // Bind events (needed in both live and mock mode)
   $('btn-add').addEventListener('click', openAdd);
   $('btn-modal-save').addEventListener('click', save);
   $('btn-modal-cancel').addEventListener('click', closeModal);
   $('btn-modal-delete').addEventListener('click', remove);
   $('btn-start').addEventListener('click', startDaemon);
   $('btn-stop').addEventListener('click', stopDaemon);
-  $('btn-refresh').addEventListener('click', checkStatus);
+  $('btn-refresh').addEventListener('click', reloadDaemon);
 
   // Close modal on overlay click
   $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
 
   // Enter key in cmd field triggers save
   $('input-cmd').addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+
+  if (IS_MOCK) return;  // skip kernelsu-alt calls in browser dev
+
+  // Check status (don't block render)
+  checkStatus();
 
   // Refresh status every 30s
   setInterval(checkStatus, 30000);

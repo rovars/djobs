@@ -22,7 +22,8 @@ body {
 }
 
 /* ─── Header ─── */
-.app-header { margin-bottom: 20px; }
+.app-header { margin-bottom: 20px; padding-top: 8px; }
+.app-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .app-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
 .app-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
@@ -54,6 +55,7 @@ body {
 .status-actions {
   display: flex; gap: 8px; padding: 0 16px 12px;
 }
+.status-actions .btn { flex: 1; }
 
 /* ─── Buttons ─── */
 .btn {
@@ -69,7 +71,8 @@ body {
 .btn.flat { background: transparent; color: var(--text); }
 .btn.flat:hover { background: rgba(128,128,128,.08); }
 .btn.danger { color: var(--red); }
-.btn.full { width: 100%; padding: 12px; margin-bottom: 24px; }
+.btn.danger:first-child { margin-right: auto; }
+.btn.full { width: 100%; padding: 12px; margin: 8px 0; }
 
 /* ─── Job Row ─── */
 .job-row {

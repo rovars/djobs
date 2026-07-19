@@ -11,8 +11,13 @@
 
 <!-- Header -->
 <header class="app-header">
-  <h1 class="app-title">DailyJobs</h1>
-  <p class="app-subtitle">Task scheduler</p>
+  <div class="app-header-row">
+    <div>
+      <h1 class="app-title">DailyJobs</h1>
+      <p class="app-subtitle">Task scheduler</p>
+    </div>
+    <button class="btn primary" id="btn-add">+ Add</button>
+  </div>
 </header>
 
 <!-- Service Status -->
@@ -24,12 +29,11 @@
   </div>
   <div class="status-actions">
     <button class="btn primary" id="btn-start">Start</button>
-    <button class="btn flat" id="btn-stop">Stop</button>
-    <button class="btn flat" id="btn-refresh">Refresh</button>
+    <button class="btn primary" id="btn-stop">Stop</button>
+    <button class="btn primary" id="btn-refresh">Refresh</button>
   </div>
 </section>
 
-<!-- Job List -->
 <section class="card" id="jobs-card">
   <div class="card-header">
     <h2>Jobs</h2>
@@ -37,9 +41,6 @@
   </div>
   <div id="job-list"></div>
 </section>
-
-<!-- Add Button -->
-<button class="btn primary full" id="btn-add">+ Add job</button>
 
 <!-- Modal Overlay -->
 <div class="modal-overlay" id="modal">
@@ -54,8 +55,8 @@
       <input id="input-cmd" placeholder="svc data disable">
     </div>
     <div class="modal-actions">
-      <button class="btn flat" id="btn-modal-cancel">Cancel</button>
       <button class="btn flat danger" id="btn-modal-delete">Delete</button>
+      <button class="btn flat" id="btn-modal-cancel">Cancel</button>
       <button class="btn primary" id="btn-modal-save">Save</button>
     </div>
   </div>
