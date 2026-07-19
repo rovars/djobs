@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # Remove DailyJobs runtime data
 
-DATA_DIR=/data/adb/dailyjobs
+PERSISTENT_DIR=/data/adb/dailyjobs
 
 # Stop daemon via CLI if available
 if [ -x /data/adb/dailyjobs/bin/djobs ]; then
@@ -20,4 +20,4 @@ fi
 rm -f /data/adb/service.d/dailyjobs.sh
 
 # Remove all runtime data (config, logs, binaries, everything)
-rm -rf "$DATA_DIR"
+rm -rf "$PERSISTENT_DIR"
