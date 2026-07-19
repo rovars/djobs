@@ -45,7 +45,11 @@ jobs:
         cd webui
         npm ci
         npm run build
-        cp -r dist/* ../module/ 2>/dev/null || true
+
+    - name: Tag module with commit hash
+      run: |
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        sed -i "s/^name=DailyJobs$/name=DailyJobs [$COMMIT_HASH]/" module/module.prop
 
     - name: Set variables
       run: |
