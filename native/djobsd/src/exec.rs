@@ -21,7 +21,7 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
         .open(log_path)
         .map_err(|e| format!("cannot open log: {e}"))?;
 
-    let child = Command::new("su")
+    let child = Command::new("sh")
         .args(["-c", cmd])
         .stdout(log_file.try_clone().map_err(|e| format!("dup stdout: {e}"))?)
         .stderr(log_file)
