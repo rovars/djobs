@@ -5,76 +5,65 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DailyJobs</title>
 <link rel="stylesheet" type="text/css" href="/internal/insets.css" />
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<md-list aria-label="top-app-bar" class="top-app-bar">
-  <md-list-item>
-    <span slot="headline" class="app-title">DailyJobs</span>
-    <span slot="supporting-text" class="app-subtitle">Task scheduler</span>
-  </md-list-item>
-</md-list>
+<!-- Header -->
+<header class="app-header">
+  <h1 class="app-title">DailyJobs</h1>
+  <p class="app-subtitle">Task scheduler</p>
+</header>
 
-<div class="tab-page" id="page-jobs">
-  <section>
-    <div class="timeline" id="schedule-list">
-      <div class="timeline-empty">
-        <div class="empty-icon">⏰</div>
-        <p>No jobs scheduled</p>
-        <span class="empty-hint">Tap Add job to get started</span>
-      </div>
+<!-- Service Status -->
+<section class="card" id="service-card">
+  <div class="status-row">
+    <span class="status-dot" id="status-dot"></span>
+    <span class="status-text" id="status-text">Checking...</span>
+    <span class="status-pid" id="status-pid"></span>
+  </div>
+  <div class="status-actions">
+    <button class="btn primary" id="btn-start">Start</button>
+    <button class="btn flat" id="btn-stop">Stop</button>
+    <button class="btn flat" id="btn-refresh">Refresh</button>
+  </div>
+</section>
+
+<!-- Job List -->
+<section class="card" id="jobs-card">
+  <div class="card-header">
+    <h2>Jobs</h2>
+    <span class="job-count" id="job-count">0</span>
+  </div>
+  <div id="job-list"></div>
+</section>
+
+<!-- Add Button -->
+<button class="btn primary full" id="btn-add">+ Add job</button>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 class="modal-title" id="modal-title">New Job</h3>
+    <div class="field">
+      <label for="input-time">Time / Cron</label>
+      <input id="input-time" placeholder='22:00 or step/15 9-17 * * 1-5'>
     </div>
-  </section>
+    <div class="field">
+      <label for="input-cmd">Command</label>
+      <input id="input-cmd" placeholder="svc data disable">
+    </div>
+    <div class="modal-actions">
+      <button class="btn flat" id="btn-modal-cancel">Cancel</button>
+      <button class="btn flat danger" id="btn-modal-delete">Delete</button>
+      <button class="btn primary" id="btn-modal-save">Save</button>
+    </div>
+  </div>
 </div>
 
-<!-- Add button (full width) -->
-<div class="add-button-wrap">
-  <md-filled-button class="full-btn" onclick="openAddDialog()">
-    Add job
-  </md-filled-button>
-</div>
-
-<!-- Add dialog -->
-<md-dialog id="add-dialog">
-  <div slot="headline">New Job</div>
-  <form slot="content" id="add-form" method="dialog">
-    <md-outlined-text-field label="Time" id="new-time" value="22:00" class="full" placeholder='22:00 or step/15 9-17 * * 1-5'></md-outlined-text-field>
-    <md-outlined-text-field label="Command" id="new-cmd" placeholder="svc data disable" class="full" style="margin-top:12px"></md-outlined-text-field>
-  </form>
-  <div slot="actions">
-    <md-text-button form="add-form" value="cancel">Cancel</md-text-button>
-    <md-filled-button onclick="doAddFromDialog()">Add</md-filled-button>
-  </div>
-</md-dialog>
-
-<!-- Edit dialog -->
-<md-dialog id="edit-dialog">
-  <div slot="headline">Edit job</div>
-  <form slot="content" id="edit-form" method="dialog">
-    <md-outlined-text-field label="Time" id="edit-time" class="full" placeholder='22:00 or step/15 9-17 * * 1-5'></md-outlined-text-field>
-    <md-outlined-text-field label="Command" id="edit-cmd" class="full" style="margin-top:12px"></md-outlined-text-field>
-  </form>
-  <div slot="actions">
-    <md-text-button style="color:#ef4444" onclick="deleteFromEdit()">Delete</md-text-button>
-    <md-text-button form="edit-form" value="cancel">Cancel</md-text-button>
-    <md-filled-button onclick="saveEditFromDialog()">Save</md-filled-button>
-  </div>
-</md-dialog>
-
-<!-- Delete dialog -->
-<md-dialog id="delete-dialog">
-  <div slot="headline">Remove job?</div>
-  <form slot="content" id="delete-form" method="dialog">
-    <p class="dialog-desc">This entry will be removed from the schedule.</p>
-  </form>
-  <div slot="actions">
-    <md-text-button form="delete-form" value="cancel">Cancel</md-text-button>
-    <md-filled-button onclick="doDelFromDialog()">Delete</md-filled-button>
-  </div>
-</md-dialog>
-
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script type="module" src="index.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
