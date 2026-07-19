@@ -1,6 +1,6 @@
 {
-  "version": "v3.4",
-  "versionCode": 10,
-  "zipUrl": "https://github.com/rovars/djobs/releases/latest/download/dailyjobs_v3.4-10.zip",
+  "version": "v4.0.0",
+  "versionCode": 11,
+  "zipUrl": "https://github.com/rovars/djobs/releases/latest/download/dailyjobs_v4.0.0-11.zip",
   "changelog": "https://raw.githubusercontent.com/rovars/djobs/refs/heads/master/CHANGELOG.md"
 }

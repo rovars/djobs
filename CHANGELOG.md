@@ -1,5 +1,13 @@
 # Changelog
 
+## v4.0.0
+- Rewrite: native daemon rewritten in Rust (`djobsd`), CLI rewritten in Rust (`djobs`)
+- Feature: deep-sleep-safe via `timerfd(CLOCK_REALTIME_ALARM)` + `epoll_wait`
+- Feature: SIGHUP config hot-reload (self-pipe trick)
+- Feature: CLI — start/stop/restart/status/logs subcommands
+- Refactor: module scripts delegate to `djobs` CLI instead of direct PID manipulation
+- Chore: C-based codebase fully replaced with Rust
+
 ## v3.4
 - Refactor: wakeup_inspector merged into scheduler --diagnose flag
 - Refactor: service.sh deduplicated to 6-line boot wrapper (exec djobs.sh)

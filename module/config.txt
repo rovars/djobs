@@ -1,27 +1,31 @@
-# Format: HH:MM shell_command  (simple)  atau  cron_expression command
+# Format: cron_expression command          (5-field cron)
+#         atau HH:MM shell_command          (konversi otomatis via WebUI)
 #
-# Contoh di bawah di-comment (#). Buka WebUI → toggle ON untuk aktifkan.
+# Baris diawali # untuk nonaktifkan sementara.
 #
-# ─── Mati/hidupkan data otomatis ───
+# ─── Contoh task ───
+#
+# Mati/hidupkan data otomatis:
 # 22:30 svc data disable
 # 07:00 svc data enable
 #
-# ─── Mode pesawat ───
+# Mode pesawat:
 # 23:00 cmd connectivity airplane-mode enable
 # 06:00 cmd connectivity airplane-mode disable
 #
-# ─── WiFi ───
+# WiFi:
 # 23:30 svc wifi disable
 # 06:30 svc wifi enable
 #
-# ─── Cron: matikan data setiap 2 jam (lebiih fleksibel) ───
+# Cron: matikan data setiap 2 jam:
 # 0 */2 * * * svc data disable
 #
-# ─── Cron: start app tiap Senin/Rabu/Jumat jam 9 pagi ───
+# Cron: start app tiap Senin/Rabu/Jumat jam 9 pagi:
 # 0 9 * * 1,3,5 am start -n com.example/.MainActivity
 #
-# Awali dengan # untuk nonaktifkan sementara.
-#
-# Data directory: /data/adb/dailyjobs/
-# Log:            /data/adb/dailyjobs/run.log
-# Scheduler PID:  /data/adb/dailyjobs/scheduler.pid
+# ─── Info ───
+# Daemon:  /data/adb/dailyjobs/bin/djobsd
+# CLI:     /data/adb/dailyjobs/djobs
+# Config:  /data/adb/dailyjobs/config.txt
+# Log:     /data/adb/dailyjobs/run.log
+# PID:     /data/adb/dailyjobs/scheduler.pid

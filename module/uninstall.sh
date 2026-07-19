@@ -1,29 +1,23 @@
 #!/system/bin/sh
 # Remove DailyJobs runtime data
 
-SCHEDULER=/data/adb/dailyjobs/scheduler
-PID_FILE=/data/adb/dailyjobs/scheduler.pid
-SERVICE_SCRIPT=/data/adb/service.d/dailyjobs.sh
 DATA_DIR=/data/adb/dailyjobs
 
-# Stop scheduler if running
-if [ -f "$PID_FILE" ]; then
-  PID=$(cat "$PID_FILE" 2>/dev/null)
+# Stop daemon via CLI if available
+if [ -x /data/adb/dailyjobs/djobs ]; then
+  /data/adb/dailyjobs/djobs stop 2>/dev/null || true
+elif [ -f /data/adb/dailyjobs/scheduler.pid ]; then
+  PID=$(cat /data/adb/dailyjobs/scheduler.pid 2>/dev/null)
   if [ -n "$PID" ]; then
-    # Kill children first, then parent
     pkill -P "$PID" 2>/dev/null || true
     kill "$PID" 2>/dev/null || true
     sleep 1
     kill -0 "$PID" 2>/dev/null && kill -9 "$PID" 2>/dev/null || true
   fi
-  rm -f "$PID_FILE"
 fi
 
 # Remove boot service
-rm -f "$SERVICE_SCRIPT"
+rm -f /data/adb/service.d/dailyjobs.sh
 
-# Remove scheduler binary
-rm -f "$SCHEDULER"
-
-# Remove all runtime data (config, logs, everything)
+# Remove all runtime data (config, logs, binaries, everything)
 rm -rf "$DATA_DIR"
