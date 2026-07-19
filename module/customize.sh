@@ -1,6 +1,8 @@
 #!/bin/sh
 # DailyJobs v4.0 installer — KernelSU / Magisk / APatch
 
+PERSISTENT_DIR=/data/adb/dailyjobs
+
 # ---- Detect CPU architecture ----
 ARCH=$(uname -m)
 case "$ARCH" in
@@ -22,38 +24,34 @@ case "$ARCH" in
     ;;
 esac
 
-# ---- Install ----
-mkdir -p /data/adb/dailyjobs/bin
+# ---- Setup PERSISTENT_DIR ----
+mkdir -p "$PERSISTENT_DIR/bin"
 
-# Default config
-if [ ! -f /data/adb/dailyjobs/config.txt ]; then
-  cp "$MODPATH/config.txt" /data/adb/dailyjobs/config.txt
+# Default config (copy only if not exists — preserve existing)
+if [ ! -f "$PERSISTENT_DIR/config.txt" ]; then
+  cp "$MODPATH/config.txt" "$PERSISTENT_DIR/config.txt"
   ui_print "- Created default config"
 fi
 
-# Deploy daemon binary
+# Deploy daemon binary (mv — no stale copy in module dir)
 if [ -f "$MODPATH/bin/djobsd_$ARCH_SUFFIX" ]; then
-  cp "$MODPATH/bin/djobsd_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobsd
-  chmod 755 /data/adb/dailyjobs/bin/djobsd
+  mv "$MODPATH/bin/djobsd_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobsd"
+  chmod 755 "$PERSISTENT_DIR/bin/djobsd"
   ui_print "- Deployed djobsd ($ARCH_SUFFIX)"
 else
   ui_print "! Daemon binary not found: bin/djobsd_$ARCH_SUFFIX"
   abort "Architecture not supported"
 fi
 
-# Deploy CLI binary
+# Deploy CLI binary (mv — no stale copy in module dir)
 if [ -f "$MODPATH/bin/djobs_$ARCH_SUFFIX" ]; then
-  cp "$MODPATH/bin/djobs_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobs
-  chmod 755 /data/adb/dailyjobs/bin/djobs
+  mv "$MODPATH/bin/djobs_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobs"
+  chmod 755 "$PERSISTENT_DIR/bin/djobs"
   ui_print "- Deployed djobs CLI ($ARCH_SUFFIX)"
 fi
 
-# Boot service — MODULE/service.sh runs automatically at late_start
-ui_print "- Boot service: module/service.sh (auto)"
-
 # Symlink for module manager
-rm -rf "$MODPATH/dailyjobs"
-ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
+rm -rf "$MODPATH/dailyjobs" "$MODPATH/bin"
 
 ui_print "- [DailyJobs] Installation complete!"
-ui_print "- Reboot or run: /data/adb/dailyjobs/bin/djobs start"
+ui_print "- Reboot or run: $PERSISTENT_DIR/bin/djobs start"
