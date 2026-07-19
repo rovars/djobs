@@ -29,7 +29,7 @@ jobs:
       run: |
         rustup target add aarch64-linux-android armv7-linux-androideabi
 
-    - name: Build Rust binaries
+    - name: Build Rust daemon
       run: |
         cd native
         chmod +x build.sh
@@ -37,8 +37,6 @@ jobs:
         mkdir -p ../module/djobs_bin
         cp djobsd_arm64 ../module/djobs_bin/djobsd_arm64
         cp djobsd_arm ../module/djobs_bin/djobsd_arm
-        cp djobs_arm64 ../module/djobs_bin/djobs_arm64
-        cp djobs_arm ../module/djobs_bin/djobs_arm
 
     - name: Build webui
       run: |
