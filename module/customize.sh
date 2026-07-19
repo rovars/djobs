@@ -34,18 +34,18 @@ if [ ! -f "$PERSISTENT_DIR/config.txt" ]; then
 fi
 
 # Deploy daemon binary (mv — no stale copy in module dir)
-if [ -f "$MODPATH/bin/djobsd_$ARCH_SUFFIX" ]; then
-  mv "$MODPATH/bin/djobsd_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobsd"
+if [ -f "$MODPATH/djobs_bin/djobsd_$ARCH_SUFFIX" ]; then
+  mv "$MODPATH/djobs_bin/djobsd_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobsd"
   chmod 755 "$PERSISTENT_DIR/bin/djobsd"
   ui_print "- Deployed djobsd ($ARCH_SUFFIX)"
 else
-  ui_print "! Daemon binary not found: bin/djobsd_$ARCH_SUFFIX"
+  ui_print "! Daemon binary not found: djobs_bin/djobsd_$ARCH_SUFFIX"
   abort "Architecture not supported"
 fi
 
 # Deploy CLI binary (mv — no stale copy in module dir)
-if [ -f "$MODPATH/bin/djobs_$ARCH_SUFFIX" ]; then
-  mv "$MODPATH/bin/djobs_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobs"
+if [ -f "$MODPATH/djobs_bin/djobs_$ARCH_SUFFIX" ]; then
+  mv "$MODPATH/djobs_bin/djobs_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobs"
   chmod 755 "$PERSISTENT_DIR/bin/djobs"
   ui_print "- Deployed djobs CLI ($ARCH_SUFFIX)"
 fi

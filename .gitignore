@@ -14,7 +14,5 @@ ELFkickers-3.2/
 *.zip
 node_modules/
 webui/dist/
-module/djobsd
-module/djobsd_arm
-module/djobsd_arm64
+module/djobs_bin/
 module/webroot/

@@ -34,11 +34,11 @@ jobs:
         cd native
         chmod +x build.sh
         ./build.sh all
-        mkdir -p ../module/bin
-        cp djobsd_arm64 ../module/bin/djobsd_arm64
-        cp djobsd_arm ../module/bin/djobsd_arm
-        cp djobs_arm64 ../module/bin/djobs_arm64
-        cp djobs_arm ../module/bin/djobs_arm
+        mkdir -p ../module/djobs_bin
+        cp djobsd_arm64 ../module/djobs_bin/djobsd_arm64
+        cp djobsd_arm ../module/djobs_bin/djobsd_arm
+        cp djobs_arm64 ../module/djobs_bin/djobs_arm64
+        cp djobs_arm ../module/djobs_bin/djobs_arm
 
     - name: Build webui
       run: |
@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: binaries-${{ env.ZIP_NAME }}
-        path: module/bin/
+        path: module/djobs_bin/
         if-no-files-found: error
 
     - name: Upload module artifact
