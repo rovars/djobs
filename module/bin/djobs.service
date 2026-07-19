@@ -1,0 +1,112 @@
+#!/system/bin/sh
+# DailyJobs scheduler control
+# Usage: djobs.service <start|stop|restart|status|logs [n]>
+
+DAEMON_BIN=/data/adb/dailyjobs/bin/djobsd
+PID_FILE=/data/adb/dailyjobs/scheduler.pid
+LOG_FILE=/data/adb/dailyjobs/run.log
+CONFIG_FILE=/data/adb/dailyjobs/config.txt
+WAIT_TIMEOUT=5
+
+read_pid() {
+    [ -f "$PID_FILE" ] && cat "$PID_FILE"
+}
+
+is_running() {
+    pid=$(read_pid)
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+wait_for_death() {
+    pid=$1 i=0
+    while [ $i -lt $WAIT_TIMEOUT ]; do
+        kill -0 "$pid" 2>/dev/null || return
+        sleep 1
+        i=$((i + 1))
+    done
+    echo "[DailyJobs] Force killing PID $pid..."
+    kill -9 "$pid" 2>/dev/null || true
+}
+
+start() {
+    if is_running; then
+        echo "[DailyJobs] Already running (PID $(read_pid))"
+        return
+    fi
+    if [ ! -f "$DAEMON_BIN" ]; then
+        echo "[DailyJobs] Binary not found: $DAEMON_BIN"
+        exit 1
+    fi
+
+    echo "[DailyJobs] Starting scheduler..."
+
+    $DAEMON_BIN --config "$CONFIG_FILE" >/dev/null 2>/dev/null &
+    pid=$!
+    echo "$pid" > "$PID_FILE"
+    sleep 1
+
+    if is_running; then
+        echo "[DailyJobs] Started OK (PID $pid)"
+    else
+        echo "[DailyJobs] Start failed (process died)"
+        rm -f "$PID_FILE"
+        exit 1
+    fi
+}
+
+stop() {
+    pid=$(read_pid)
+    if [ -z "$pid" ] || ! is_running; then
+        echo "[DailyJobs] Not running"
+        rm -f "$PID_FILE"
+        return
+    fi
+
+    echo "[DailyJobs] Stopping scheduler (PID $pid)..."
+    pkill -P "$pid" 2>/dev/null || true
+    kill "$pid" 2>/dev/null || true
+    wait_for_death "$pid"
+    rm -f "$PID_FILE"
+    echo "[DailyJobs] Stopped"
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+    if is_running; then
+        pid=$(read_pid)
+        echo "[DailyJobs] Running (PID $pid)"
+        if [ -f "$LOG_FILE" ]; then
+            tail -n 3 "$LOG_FILE"
+        else
+            echo "[DailyJobs] No log file yet"
+        fi
+    else
+        echo "[DailyJobs] Stopped"
+    fi
+}
+
+logs() {
+    n="${1:-50}"
+    if [ -f "$LOG_FILE" ]; then
+        tail -n "$n" "$LOG_FILE"
+    else
+        echo "[DailyJobs] Cannot read log file: $LOG_FILE" >&2
+        exit 1
+    fi
+}
+
+case "${1:-help}" in
+    start)   start ;;
+    stop)    stop ;;
+    restart) restart ;;
+    status)  status ;;
+    logs)    logs "$2" ;;
+    *)
+        echo "Usage: $0 <start|stop|restart|status|logs [n]>"
+        exit 1
+        ;;
+esac

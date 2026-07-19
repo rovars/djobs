@@ -43,12 +43,10 @@ else
   abort "Architecture not supported"
 fi
 
-# Deploy CLI binary (mv — no stale copy in module dir)
-if [ -f "$MODPATH/djobs_bin/djobs_$ARCH_SUFFIX" ]; then
-  mv "$MODPATH/djobs_bin/djobs_$ARCH_SUFFIX" "$PERSISTENT_DIR/bin/djobs"
-  chmod 755 "$PERSISTENT_DIR/bin/djobs"
-  ui_print "- Deployed djobs CLI ($ARCH_SUFFIX)"
-fi
+# Deploy CLI shell script
+cp "$MODPATH/bin/djobs.service" "$PERSISTENT_DIR/djobs.service"
+chmod 755 "$PERSISTENT_DIR/djobs.service"
+ui_print "- Deployed djobs CLI (service script)"
 
 ui_print "- [DailyJobs] Installation complete!"
-ui_print "- Reboot or run: $PERSISTENT_DIR/bin/djobs start"
+ui_print "- Reboot or run: $PERSISTENT_DIR/djobs.service start"

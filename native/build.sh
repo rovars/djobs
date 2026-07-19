@@ -20,20 +20,16 @@ build_native() {
     echo "[build] x86_64 (native)..."
     (cd djobsd && $CARGO build --release) || return 1
     cp djobsd/target/release/djobsd djobsd
-    (cd djobs && $CARGO build --release) || return 1
-    cp djobs/target/release/djobs djobs
 }
 
 build_arm64() {
     echo "[build] ARM64 (aarch64-linux-android)..."
     build_android djobsd aarch64-linux-android djobsd_arm64
-    build_android djobs aarch64-linux-android djobs_arm64
 }
 
 build_arm() {
     echo "[build] ARM (armv7-linux-androideabi)..."
     build_android djobsd armv7-linux-androideabi djobsd_arm
-    build_android djobs armv7-linux-androideabi djobs_arm
 }
 
 case "${1:-arm64}" in
