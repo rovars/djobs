@@ -50,8 +50,5 @@ if [ -f "$MODPATH/djobs_bin/djobs_$ARCH_SUFFIX" ]; then
   ui_print "- Deployed djobs CLI ($ARCH_SUFFIX)"
 fi
 
-# Clean up stale symlink from previous installs
-rm -f "$MODPATH/dailyjobs"
-
 ui_print "- [DailyJobs] Installation complete!"
 ui_print "- Reboot or run: $PERSISTENT_DIR/bin/djobs start"
