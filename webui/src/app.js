@@ -1,6 +1,7 @@
 /* ─── Constants ─── */
 const CFG = '/data/adb/dailyjobs/config.txt';
 const DJOBS = '/data/adb/dailyjobs/djobs.service';
+const SU = '/system/bin/su -c';
 
 /* ─── Mock preview data for browser dev ─── */
 const MOCK_ENTRIES = [
@@ -96,7 +97,7 @@ function render() {
 async function checkStatus() {
   if (IS_MOCK) return;
   try {
-    const r = await run(DJOBS + " status");
+    const r = await run(SU + " " + DJOBS + " status");
     const running = r.stdout.includes('Running');
     const pid = running ? (r.stdout.match(/PID (\d+)/) || [])[1] || '' : '';
     renderStatus(running, pid);
@@ -122,7 +123,7 @@ function renderStatus(running, pid) {
 async function startDaemon() {
   $('btn-start').disabled = true;
   try {
-    await run(DJOBS + " start");
+    await run(SU + " " + DJOBS + " start");
     await checkStatus();
     toast('Daemon started');
   } catch (e) { toast('Start failed: ' + e.message); }
@@ -132,7 +133,7 @@ async function startDaemon() {
 async function stopDaemon() {
   $('btn-stop').disabled = true;
   try {
-    await run(DJOBS + " stop");
+    await run(SU + " " + DJOBS + " stop");
     await checkStatus();
     toast('Daemon stopped');
   } catch (e) { toast('Stop failed: ' + e.message); }
@@ -144,7 +145,7 @@ async function reloadDaemon() {
   if (IS_MOCK) return;
   $('btn-refresh').disabled = true;
   try {
-    await run(DJOBS + " restart");
+    await run(SU + " " + DJOBS + " restart");
     entries = await readConfig();
     render();
     await checkStatus();
