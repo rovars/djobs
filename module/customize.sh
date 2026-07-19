@@ -35,7 +35,6 @@ fi
 if [ -f "$MODPATH/bin/scheduler_$ARCH_SUFFIX" ]; then
   cp "$MODPATH/bin/scheduler_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobsd
   chmod 755 /data/adb/dailyjobs/bin/djobsd
-  ln -sf bin/djobsd /data/adb/dailyjobs/scheduler
   ui_print "- Deployed djobsd ($ARCH_SUFFIX)"
 else
   ui_print "! Daemon binary not found: bin/scheduler_$ARCH_SUFFIX"
@@ -46,7 +45,6 @@ fi
 if [ -f "$MODPATH/bin/djobs_$ARCH_SUFFIX" ]; then
   cp "$MODPATH/bin/djobs_$ARCH_SUFFIX" /data/adb/dailyjobs/bin/djobs
   chmod 755 /data/adb/dailyjobs/bin/djobs
-  ln -sf bin/djobs /data/adb/dailyjobs/djobs
   ui_print "- Deployed djobs CLI ($ARCH_SUFFIX)"
 fi
 
@@ -55,7 +53,7 @@ ui_print "- Boot service: module/service.sh (auto)"
 
 # Symlink for module manager
 rm -rf "$MODPATH/dailyjobs"
-ln -s /data/adb/dailyjobs "$MODPATH/dailyjobs"
+ln -s /data/adb/dailyjobs/bin "$MODPATH/dailyjobs"
 
 ui_print "- [DailyJobs] Installation complete!"
-ui_print "- Reboot or run: /data/adb/dailyjobs/djobs start"
+ui_print "- Reboot or run: /data/adb/dailyjobs/bin/djobs start"

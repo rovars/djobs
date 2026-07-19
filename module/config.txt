@@ -25,7 +25,7 @@
 #
 # ─── Info ───
 # Daemon:  /data/adb/dailyjobs/bin/djobsd
-# CLI:     /data/adb/dailyjobs/djobs
+# CLI:     /data/adb/dailyjobs/bin/djobs
 # Config:  /data/adb/dailyjobs/config.txt
 # Log:     /data/adb/dailyjobs/run.log
 # PID:     /data/adb/dailyjobs/scheduler.pid

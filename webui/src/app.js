@@ -2,7 +2,7 @@ import { exec } from 'kernelsu-alt';
 
 /* ─── Constants ─── */
 const CFG = '/data/adb/dailyjobs/config.txt';
-const DJOBS = '/data/adb/dailyjobs/djobs';
+const DJOBS = '/data/adb/dailyjobs/bin/djobs';
 
 /* ─── DOM Helpers ─── */
 const $ = id => document.getElementById(id);

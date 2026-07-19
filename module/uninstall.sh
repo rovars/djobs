@@ -4,8 +4,8 @@
 DATA_DIR=/data/adb/dailyjobs
 
 # Stop daemon via CLI if available
-if [ -x /data/adb/dailyjobs/djobs ]; then
-  /data/adb/dailyjobs/djobs stop 2>/dev/null || true
+if [ -x /data/adb/dailyjobs/bin/djobs ]; then
+  /data/adb/dailyjobs/bin/djobs stop 2>/dev/null || true
 elif [ -f /data/adb/dailyjobs/scheduler.pid ]; then
   PID=$(cat /data/adb/dailyjobs/scheduler.pid 2>/dev/null)
   if [ -n "$PID" ]; then
