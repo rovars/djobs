@@ -52,14 +52,10 @@ unsafe extern "C" fn signal_handler(sig: i32) {
             RUNNING.store(false, Ordering::SeqCst);
         }
         libc::SIGCHLD => {
-            // Only set flag + wake epoll — actual reaping happens in main loop.
-            // Must NOT call log::info! or any non-async-signal-safe function.
+            // Only set flag — main loop reaps via SIGCHLD_PENDING check.
+            // epoll_wait returns EINTR from signal interruption, which is
+            // handled below (cleanup + continue → top of loop reaps).
             SIGCHLD_PENDING.store(true, Ordering::SeqCst);
-            let fd = SIGHUP_PIPE_WRITE.load(Ordering::SeqCst);
-            if fd >= 0 {
-                let val: u8 = 0;
-                let _ = libc::write(fd, &val as *const u8 as *const libc::c_void, 1);
-            }
         }
         _ => {}
     }
@@ -308,13 +304,7 @@ fn main() {
 
         if nfds < 0 {
             let err = std::io::Error::last_os_error();
-            if err.raw_os_error() == Some(libc::EINTR) {
-                log::info!("Interrupted by signal");
-                if RUNNING.load(Ordering::SeqCst) {
-                    let cfg2 = config::load_config(&config_path).unwrap_or(cfg);
-                    execute_due_tasks(&cfg2.tasks, &mut last_check, config::now_ts(), &log_path);
-                }
-            } else {
+            if err.raw_os_error() != Some(libc::EINTR) {
                 log::error!("epoll_wait error: {err}");
                 std::thread::sleep(Duration::from_secs(5));
             }

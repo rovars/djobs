@@ -42,8 +42,16 @@ function parseConfig(text) {
   return out;
 }
 
+function hhmmToCron(t) {
+  const [h, m] = t.split(':');
+  return `${parseInt(m)} ${parseInt(h)} * * *`;
+}
+
 function serializeConfig(entries) {
-  return entries.map(e => (e.disabled ? '# ' : '') + e.time + ' ' + e.cmd).join('\n') + '\n';
+  return entries.map(e => {
+    const cronTime = e.isCron ? e.time : hhmmToCron(e.time);
+    return (e.disabled ? '# ' : '') + cronTime + ' ' + e.cmd;
+  }).join('\n') + '\n';
 }
 
 async function readConfig() {
