@@ -44,7 +44,7 @@ else
 fi
 
 # Deploy CLI shell script
-cp "$MODPATH/bin/djobs.service" "$PERSISTENT_DIR/djobs.service"
+cp "$MODPATH/djobs.service" "$PERSISTENT_DIR/djobs.service"
 chmod 755 "$PERSISTENT_DIR/djobs.service"
 ui_print "- Deployed djobs CLI (service script)"
 
