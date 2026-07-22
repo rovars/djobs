@@ -47,10 +47,17 @@ function parseConfig(text) {
     const disabled = t[0] === '#';
     const body = disabled ? t.slice(1).trim() : t;
 
+    // @reboot
+    if (body.startsWith('@reboot')) {
+      const cmd = body.slice(7).trim();
+      if (cmd) out.push({ time: '@reboot', cmd, disabled, isCron: true });
+      continue;
+    }
+
     let m = body.match(/^(\d{2}:\d{2})\s+(.+)$/);
     if (m) { out.push({ time: m[1], cmd: m[2].trim(), disabled, isCron: false }); continue; }
 
-    m = body.match(/^([\d*,/\-*]+\s+[\d*,/\-*]+\s+[\d*,/\-*]+\s+[\d*,/\-*]+\s+[\d*,/\-*]+)\s+(.+)$/);
+    m = body.match(/^([\d\w*,/\-*]+\s+[\d\w*,/\-*]+\s+[\d\w*,/\-*]+\s+[\d\w*,/\-*]+\s+[\d\w*,/\-*]+)\s+(.+)$/);
     if (m) { out.push({ time: m[1].replace(/\s+/g, ' ').trim(), cmd: m[2].trim(), disabled, isCron: true }); continue; }
   }
   return out;
@@ -63,6 +70,7 @@ function hhmmToCron(t) {
 
 function serializeConfig(entries) {
   return entries.map(e => {
+    if (e.time === '@reboot') return (e.disabled ? '# ' : '') + '@reboot ' + e.cmd;
     const cronTime = e.isCron ? e.time : hhmmToCron(e.time);
     return (e.disabled ? '# ' : '') + cronTime + ' ' + e.cmd;
   }).join('\n') + '\n';
@@ -210,13 +218,14 @@ function closeModal() {
 }
 
 function isValidTime(t) {
+  if (t === '@reboot') return true;
   if (/^\d{2}:\d{2}$/.test(t)) {
     const [, h, m] = t.match(/^(\d{2}):(\d{2})$/);
     return +h < 24 && +m < 60;
   }
   const f = t.trim().split(/\s+/);
   if (f.length !== 5) return false;
-  return f.every(x => /^[\d*,/\-*]+$/.test(x));
+  return f.every(x => /^[\d\w*,/\-*]+$/.test(x));
 }
 
 async function save() {
