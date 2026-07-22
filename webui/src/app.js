@@ -108,12 +108,6 @@ async function checkStatus() {
   }
 }
 
-function renderStatusPending() {
-  $('status-dot').className = 'status-dot';
-  $('status-text').textContent = 'Checking...';
-  $('status-pid').textContent = '';
-}
-
 function renderStatus(running, pid) {
   $('status-dot').className = 'status-dot' + (running ? ' running' : ' stopped');
   $('status-text').textContent = running ? 'Running' : 'Stopped';

@@ -1,10 +1,5 @@
-# Format: cron_expression command          (5-field crond syntax only)
-#
-# Daemon ONLY accepts standard 5-field cron. HH:MM format is NOT supported.
-# WebUI converts HH:MM to cron before saving — this file always uses cron.
-# Prefix a line with # to disable temporarily.
-#
-# ─── Task examples ───
+# Format: cron_expression command (5-field cron only, no HH:MM)
+# Prefix with # to disable a task.
 #
 # Toggle mobile data:
 # 30 22 * * * svc data disable              ← 22:30
@@ -24,9 +19,8 @@
 # Mon/Wed/Fri at 9 AM:
 # 0 9 * * 1,3,5 am start -n com.example/.MainActivity
 #
-# ─── Info ───
+# Paths:
 # Daemon:  /data/adb/dailyjobs/bin/djobsd
-# CLI:     /data/adb/dailyjobs/bin/djobs
 # Config:  /data/adb/dailyjobs/config.txt
 # Log:     /data/adb/dailyjobs/run.log
 # PID:     /data/adb/dailyjobs/scheduler.pid

@@ -6,7 +6,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const MAX_TASKS: usize = 256;
 
-/// Error type for config loading
 #[derive(Debug)]
 pub enum ConfigError {
     Io(std::io::Error),
@@ -24,7 +23,7 @@ impl From<std::io::Error> for ConfigError {
     fn from(e: std::io::Error) -> Self { ConfigError::Io(e) }
 }
 
-/// A single cron task — bitmask-based matching
+/// Bitmask-based cron task
 #[derive(Debug, Clone)]
 pub struct CronTask {
     pub minute: [bool; 60],
@@ -48,14 +47,12 @@ impl CronTask {
     }
 }
 
-/// Parsed config — list of tasks
 #[derive(Debug)]
 pub struct Config {
     pub tasks: Vec<CronTask>,
 }
 
-/// Parse a single cron field into a bitmask array.
-/// Supports: *, */N, N-M, N,M,O (comma list), single value.
+/// Parse a cron field into a bitmask array. Supports: *, */N, N-M, N,M, value.
 fn parse_cron_field<const N: usize>(field: &str, base: u8) -> Result<[bool; N], String> {
     let mut bits = [false; N];
 
@@ -75,7 +72,6 @@ fn parse_cron_field<const N: usize>(field: &str, base: u8) -> Result<[bool; N], 
         if let Some(dash) = token.find('-') {
             let lo: usize = token[..dash].parse().map_err(|_| format!("invalid range: {token}"))?;
             let hi: usize = token[dash+1..].parse().map_err(|_| format!("invalid range: {token}"))?;
-            // Clamp lo to base — values below base (e.g. day 0) are invalid
             let lo = std::cmp::max(lo, base as usize).saturating_sub(base as usize);
             let hi = std::cmp::min(hi.saturating_sub(base as usize), N - 1);
             for i in lo..=hi { bits[i] = true; }
@@ -115,13 +111,12 @@ pub fn parse_cron_line(line: &str) -> Result<CronTask, String> {
     task.month  = parse_cron_field(fields[3], 1)?;
     task.dow    = parse_cron_field(fields[4], 0)?;
 
-    // Command = everything after the 5th field (collapse whitespace)
+    // Command = everything after the 5th field
     task.command = line_no_comment.split_whitespace().skip(5).collect::<Vec<_>>().join(" ");
 
     Ok(task)
 }
 
-/// Load config from a file path
 pub fn load_config(path: &Path) -> Result<Config, ConfigError> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
@@ -144,15 +139,13 @@ pub fn load_config(path: &Path) -> Result<Config, ConfigError> {
     Ok(Config { tasks })
 }
 
-/// Check if a task matches the given broken-down time
 pub fn cron_matches(task: &CronTask, minute: usize, hour: usize, dom: usize,
                     month: usize, dow: usize) -> bool {
     task.minute[minute] && task.hour[hour]
         && task.dom[dom] && task.month[month] && task.dow[dow]
 }
 
-/// Find the next future time where any task matches.
-/// Iterates up to 30 days ahead. Uses mktime for DST-safe day boundaries.
+/// Find the next future time where any task matches. Iterates up to 30 days.
 pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
     if tasks.is_empty() { return None; }
 
@@ -202,7 +195,6 @@ pub fn find_next_task(tasks: &[CronTask], after: i64) -> Option<i64> {
     None
 }
 
-/// Current unix timestamp in seconds
 pub fn now_ts() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

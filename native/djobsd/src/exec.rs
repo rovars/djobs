@@ -6,8 +6,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 pub const MAX_CHILDREN: usize = 8;
 static CHILD_COUNT: AtomicUsize = AtomicUsize::new(0);
 
-/// Spawn a shell command in the background.
-/// Logs stdout/stderr to `log_path`. Skips if MAX_CHILDREN reached.
+/// Spawn a shell command in the background, logging to log_path.
 pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
     let count = CHILD_COUNT.load(Ordering::SeqCst);
     if count >= MAX_CHILDREN {
@@ -28,16 +27,13 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
         .spawn()
         .map_err(|e| format!("spawn failed: {e}"))?;
 
-    // Increment AFTER spawn succeeds — prevents counter drift if SIGCHLD
-    // fires between fetch_add and spawn() completion.
+    // Increment after spawn to avoid counter drift on failure
     CHILD_COUNT.fetch_add(1, Ordering::SeqCst);
     log::info!("Exec: {cmd} (PID {})", child.id());
     Ok(())
 }
 
-/// Reap any terminated child processes (zombie cleanup).
-/// Returns the number of children reaped.
-/// Must be async-signal-safe — do NOT add logging here.
+/// Reap terminated children. Async-signal-safe — no logging.
 pub fn reap_children() -> usize {
     let mut count = 0;
     unsafe {
@@ -52,7 +48,7 @@ pub fn reap_children() -> usize {
     count
 }
 
-/// Log child reap count (only safe outside signal handler context).
+/// Log child reap count. Not signal-safe.
 pub fn log_reap_count(count: usize) {
     if count > 0 {
         log::info!("Reaped {count} child process(es), running: {}",

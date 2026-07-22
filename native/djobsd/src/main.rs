@@ -6,15 +6,14 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::time::Duration;
 
-fn log_close(fd: i32, label: &str) {
-    if fd >= 0 && unsafe { libc::close(fd) } < 0 {
-        log::error!("close({label}) failed: {}", std::io::Error::last_os_error());
-    }
+fn close_fd(fd: i32) {
+    if fd >= 0 { unsafe { libc::close(fd) }; }
 }
 
-fn log_epoll_del(epoll_fd: i32, fd: i32, label: &str) {
-    if unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, fd, std::ptr::null_mut()) } < 0 {
-        log::error!("epoll_ctl DEL {label} failed: {}", std::io::Error::last_os_error());
+fn drain_sigchld() {
+    if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
+        let n = exec::reap_children();
+        exec::log_reap_count(n);
     }
 }
 
@@ -52,9 +51,6 @@ unsafe extern "C" fn signal_handler(sig: i32) {
             RUNNING.store(false, Ordering::SeqCst);
         }
         libc::SIGCHLD => {
-            // Only set flag — main loop reaps via SIGCHLD_PENDING check.
-            // epoll_wait returns EINTR from signal interruption, which is
-            // handled below (cleanup + continue → top of loop reaps).
             SIGCHLD_PENDING.store(true, Ordering::SeqCst);
         }
         _ => {}
@@ -72,7 +68,6 @@ fn set_signal(sig: i32, handler: unsafe extern "C" fn(i32)) {
                 sa.sa_flags |= libc::SA_NOCLDSTOP;
             }
         }
-        // sa_sigaction is a union; store handler as raw pointer via usize
         sa.sa_sigaction = handler as usize;
         libc::sigaction(sig, &sa, std::ptr::null_mut());
     }
@@ -96,38 +91,41 @@ fn set_tz_from_getprop() {
     }
 }
 
+fn execute_at(tasks: &[config::CronTask], ts: i64, log_path: &PathBuf) {
+    let t = ts as libc::time_t;
+    let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+    unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
+    let mut executed = 0;
+    for task in tasks {
+        if config::cron_matches(
+            task,
+            tm.tm_min as usize,
+            tm.tm_hour as usize,
+            tm.tm_mday.saturating_sub(1) as usize,
+            tm.tm_mon as usize,
+            tm.tm_wday as usize,
+        ) {
+            log::info!("Task due: {}", task.command);
+            if let Err(e) = exec::spawn_command(&task.command, log_path) {
+                log::warn!("Failed to spawn task \"{}\": {e}", task.command);
+            }
+            executed += 1;
+        }
+    }
+    if executed > 0 {
+        log::info!("Executed {executed} task(s)");
+    }
+}
+
 fn execute_due_tasks(
     tasks: &[config::CronTask],
     last_check: &mut i64,
     now: i64,
     log_path: &PathBuf,
 ) {
-    let mut executed = 0;
-
     if *last_check == 0 {
         *last_check = now;
-        let t = now as libc::time_t;
-        let mut tm: libc::tm = unsafe { std::mem::zeroed() };
-        unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
-        for task in tasks {
-            if config::cron_matches(
-                task,
-                tm.tm_min as usize,
-                tm.tm_hour as usize,
-                tm.tm_mday.saturating_sub(1) as usize,
-                tm.tm_mon as usize,
-                tm.tm_wday as usize,
-            ) {
-                log::info!("Task due: {}", task.command);
-                if let Err(e) = exec::spawn_command(&task.command, log_path) {
-                    log::warn!("Failed to spawn task \"{}\": {e}", task.command);
-                }
-                executed += 1;
-            }
-        }
-        if executed > 0 {
-            log::info!("Executed {executed} task(s)");
-        }
+        execute_at(tasks, now, log_path);
         return;
     }
 
@@ -138,30 +136,8 @@ fn execute_due_tasks(
     }
 
     while check <= end {
-        let t = check as libc::time_t;
-        let mut tm: libc::tm = unsafe { std::mem::zeroed() };
-        unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
-        for task in tasks {
-            if config::cron_matches(
-                task,
-                tm.tm_min as usize,
-                tm.tm_hour as usize,
-                tm.tm_mday.saturating_sub(1) as usize,
-                tm.tm_mon as usize,
-                tm.tm_wday as usize,
-            ) {
-                log::info!("Task due: {}", task.command);
-                if let Err(e) = exec::spawn_command(&task.command, log_path) {
-                    log::warn!("Failed to spawn task \"{}\": {e}", task.command);
-                }
-                executed += 1;
-            }
-        }
+        execute_at(tasks, check, log_path);
         check += 60;
-    }
-
-    if executed > 0 {
-        log::info!("Executed {executed} task(s)");
     }
     *last_check = now;
 }
@@ -196,7 +172,7 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
         let ret = unsafe { libc::timerfd_settime(tfd, 0, &spec, std::ptr::null_mut()) };
         if ret < 0 {
             log::error!("timerfd_settime (relative) failed");
-            log_close(tfd, "timerfd");
+            close_fd(tfd);
             return None;
         }
     }
@@ -205,10 +181,9 @@ fn arm_timerfd(epoll_fd: i32, target_ts: i64) -> Option<i32> {
         events: libc::EPOLLIN as u32,
         u64: tfd as u64,
     };
-    let ret = unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_ADD, tfd, &mut ev) };
-    if ret < 0 {
+    if unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_ADD, tfd, &mut ev) } < 0 {
         log::error!("epoll_ctl ADD failed");
-        log_close(tfd, "timerfd");
+        close_fd(tfd);
         return None;
     }
 
@@ -258,11 +233,7 @@ fn main() {
     let mut last_check: i64 = 0;
 
     while RUNNING.load(Ordering::SeqCst) {
-        // Check if SIGCHLD fired since last iteration
-        if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
-            let n = exec::reap_children();
-            exec::log_reap_count(n);
-        }
+        drain_sigchld();
 
         let cfg = match config::load_config(&config_path) {
             Ok(c) => c,
@@ -308,8 +279,8 @@ fn main() {
                 log::error!("epoll_wait error: {err}");
                 std::thread::sleep(Duration::from_secs(5));
             }
-            log_epoll_del(epoll_fd, tfd, "timerfd");
-            log_close(tfd, "timerfd");
+            unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, tfd, std::ptr::null_mut()); }
+            close_fd(tfd);
             continue;
         }
 
@@ -337,30 +308,15 @@ fn main() {
             execute_due_tasks(&cfg.tasks, &mut last_check, config::now_ts(), &log_path);
         }
 
-        // Drain any SIGCHLD that arrived during task execution
-        if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
-            let n = exec::reap_children();
-            exec::log_reap_count(n);
-        }
-
-        log_epoll_del(epoll_fd, tfd, "timerfd");
-        log_close(tfd, "timerfd");
+        drain_sigchld();
+        unsafe { libc::epoll_ctl(epoll_fd, libc::EPOLL_CTL_DEL, tfd, std::ptr::null_mut()); }
+        close_fd(tfd);
     }
 
-    // Final SIGCHLD drain before exit
-    if SIGCHLD_PENDING.swap(false, Ordering::SeqCst) {
-        let n = exec::reap_children();
-        exec::log_reap_count(n);
-    }
+    drain_sigchld();
 
     log::info!("=== djobsd v4.0.0 stopped ===");
-    if unsafe { libc::close(epoll_fd) } < 0 {
-        log::error!("close(epoll_fd) failed: {}", std::io::Error::last_os_error());
-    }
-    if unsafe { libc::close(reload_pipe[0]) } < 0 {
-        log::error!("close(reload_pipe[0]) failed: {}", std::io::Error::last_os_error());
-    }
-    if unsafe { libc::close(reload_pipe[1]) } < 0 {
-        log::error!("close(reload_pipe[1]) failed: {}", std::io::Error::last_os_error());
-    }
+    close_fd(epoll_fd);
+    close_fd(reload_pipe[0]);
+    close_fd(reload_pipe[1]);
 }
