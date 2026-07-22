@@ -97,11 +97,12 @@ fn execute_at(tasks: &[config::CronTask], ts: i64, log_path: &PathBuf) {
     unsafe { libc::localtime_r(&t as *const libc::time_t, &mut tm); }
     let mut executed = 0;
     for task in tasks {
+        if task.reboot { continue; }
         if config::cron_matches(
             task,
             tm.tm_min as usize,
             tm.tm_hour as usize,
-            tm.tm_mday.saturating_sub(1) as usize,
+            tm.tm_mday as usize,
             tm.tm_mon as usize,
             tm.tm_wday as usize,
         ) {
@@ -231,6 +232,7 @@ fn main() {
     let log_path = args.log_file;
     let poll_interval = args.poll;
     let mut last_check: i64 = 0;
+    let mut had_reboot = false;
 
     while RUNNING.load(Ordering::SeqCst) {
         drain_sigchld();
@@ -243,6 +245,18 @@ fn main() {
                 continue;
             }
         };
+
+        if !had_reboot {
+            had_reboot = true;
+            for task in &cfg.tasks {
+                if task.reboot {
+                    log::info!("Reboot task: {}", task.command);
+                    if let Err(e) = exec::spawn_command(&task.command, &log_path) {
+                        log::warn!("Failed to spawn reboot task \"{}\": {e}", task.command);
+                    }
+                }
+            }
+        }
 
         let now = config::now_ts();
         let next_ts = config::find_next_task(&cfg.tasks, now);
