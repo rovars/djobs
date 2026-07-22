@@ -23,15 +23,14 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
     let log_fd = log_file.as_raw_fd();
 
     let c_cmd = CString::new(cmd).map_err(|e| format!("invalid cmd: {e}"))?;
-    let c_sh = CString::new("/system/bin/sh").map_err(|e| format!("invalid sh path: {e}"))?;
-    let c_arg0 = CString::new("sh").unwrap();
+    let c_sh = CString::new("sh").unwrap();
     let c_arg1 = CString::new("-c").unwrap();
 
     // crond.c-style environment setup — must be declared before fork()
     let c_home = CString::new("HOME=/data/adb/dailyjobs").unwrap();
     let c_logname = CString::new("LOGNAME=root").unwrap();
     let c_user = CString::new("USER=root").unwrap();
-    let c_shell = CString::new("SHELL=/system/bin/sh").unwrap();
+    let c_shell = CString::new("SHELL=sh").unwrap();
     let c_path = CString::new("PATH=/data/adb/magisk:/data/adb/ksu/bin:/data/adb/ap/bin:/system/bin:/system/xbin").unwrap();
 
     unsafe {
@@ -55,9 +54,8 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
             libc::putenv(c_shell.as_ptr() as *mut libc::c_char);
             libc::putenv(c_path.as_ptr() as *mut libc::c_char);
 
-            let argv: [*const libc::c_char; 5] = [
+            let argv: [*const libc::c_char; 4] = [
                 c_sh.as_ptr(),
-                c_arg0.as_ptr(),
                 c_arg1.as_ptr(),
                 c_cmd.as_ptr(),
                 std::ptr::null(),
