@@ -27,19 +27,34 @@ pub fn spawn_command(cmd: &str, log_path: &Path) -> Result<(), String> {
     let c_arg0 = CString::new("sh").unwrap();
     let c_arg1 = CString::new("-c").unwrap();
 
+    // crond.c-style environment setup — must be declared before fork()
+    let c_home = CString::new("HOME=/data/adb/dailyjobs").unwrap();
+    let c_logname = CString::new("LOGNAME=root").unwrap();
+    let c_user = CString::new("USER=root").unwrap();
+    let c_shell = CString::new("SHELL=/system/bin/sh").unwrap();
+    let c_path = CString::new("PATH=/data/adb/magisk:/data/adb/ksu/bin:/data/adb/ap/bin:/system/bin:/system/xbin").unwrap();
+
     unsafe {
         let pid = libc::fork();
         if pid < 0 {
             return Err(format!("fork failed: {}", std::io::Error::last_os_error()));
         }
         if pid == 0 {
-            // Child: setuid/setgid to root, redirect stdio, exec
+            // Child: setuid/setgid to root, set environment, redirect stdio, exec
             libc::setuid(0);
             libc::setgid(0);
             libc::dup2(log_fd, 1);
             libc::dup2(log_fd, 2);
             libc::close(log_fd);
             libc::setsid();
+
+            // Environment variables (per crond.c set_env_vars())
+            libc::putenv(c_home.as_ptr() as *mut libc::c_char);
+            libc::putenv(c_logname.as_ptr() as *mut libc::c_char);
+            libc::putenv(c_user.as_ptr() as *mut libc::c_char);
+            libc::putenv(c_shell.as_ptr() as *mut libc::c_char);
+            libc::putenv(c_path.as_ptr() as *mut libc::c_char);
+
             let argv: [*const libc::c_char; 5] = [
                 c_sh.as_ptr(),
                 c_arg0.as_ptr(),
